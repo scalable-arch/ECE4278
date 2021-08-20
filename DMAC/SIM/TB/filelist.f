@@ -1,2 +1,2 @@
-./timescale.v
-./DMAC_CFG_TB.sv
+timescale.v
+DMAC_CFG_TB.sv

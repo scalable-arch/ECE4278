@@ -39,7 +39,7 @@ module DMAC_CFG_TB ();
     initial begin
         wren                    = 1'b0;
         rden                    = 1'b0;
-        wrdata                  = 32'd0;
+        wdata                   = 32'd0;
 
         @(posedge rst_n);                   // wait for a release of the reset
         repeat (10) @(posedge clk);         // wait another 10 cycles
@@ -55,10 +55,14 @@ module DMAC_CFG_TB ();
         rden                    = 1'b0;
 
         if (rdata!== 32'h0123_4567) begin   // use !== to compare 4-state logic
-            $display("Mismatch between write and read");
+            $display("*****************************************************");
+            $display("********** Mismatch between write and read **********");
+            $display("*****************************************************");
         end
         else begin
-            $display("Match between write and read");
+            $display("*****************************************************");
+            $display("**********  Match between write and read   **********");
+            $display("*****************************************************");
         end
 
         @(posedge clk);

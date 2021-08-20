@@ -1,1 +1,1 @@
-./DMAC_CFG.sv
+DMAC_CFG.sv
