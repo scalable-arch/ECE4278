@@ -1,0 +1,19 @@
+#!/bin/bash
+
+sim_cmd="vcs -full64 -kdb -debug_access+all -LDFLAGS -Wl,--no-as-needed"
+filelist_TB="./TB/filelist.f"
+filelist_RTL="../RTL/filelist.f"
+
+if [[ "$1" == "clean" ]]; then
+  for file in ./*; do
+    if [[ "$file" == "./TB" || "$file" == "./run" ]]; then
+      continue
+    else
+      rm -rf $file
+    fi
+  done
+  echo "All file is cleaned"
+else
+  $sim_cmd -F $filelist_TB -F $filelist_RTL
+fi
+
