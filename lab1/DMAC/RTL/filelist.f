@@ -1,1 +1,1 @@
-DMAC_CFG.sv
+$LAB_PATH/RTL/DMAC_CFG.sv
