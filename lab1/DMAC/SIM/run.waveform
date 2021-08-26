@@ -7,6 +7,6 @@ then
 	cd $RUN_DIR
 	$WAVE_CMD $WAVE_OPTIONS -i dump.vcd
 else
-	echo "DUmp file does not exist"
+	echo "Dump file does not exist"
 	exit 1
 fi

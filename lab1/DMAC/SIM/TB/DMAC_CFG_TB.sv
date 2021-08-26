@@ -19,7 +19,7 @@ module DMAC_CFG_TB ();
     initial begin
         rst_n                   = 1'b0;     // active at time 0
 
-        repeat (10) @(posedge clk);         // after 10 cycles
+        repeat (3) @(posedge clk);          // after 3 cycles,
         rst_n                   = 1'b1;     // release the reset
     end
 
