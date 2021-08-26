@@ -7,11 +7,11 @@ module DMAC_CFG
     input   wire                rden_i, // read enable
 
     input   wire    [31:0]      wdata_i,
-    output  wire    [31:0]      rdata_o
+    output  reg     [31:0]      rdata_o
 );
 
 // Configuration register to read/write
-reg [31:0]                  cfg_reg;
+reg [31:0]                        cfg_reg;
 
 always @(posedge clk) begin
     if (!rst_n) begin
@@ -20,8 +20,13 @@ always @(posedge clk) begin
     else if (wren_i) begin
         cfg_reg                 <= wdata_i;
     end
-end
 
-assign  rdata_o             = cfg_reg;
+    if (rden_i) begin
+        rdata_o                 <= cfg_reg;
+    end
+    else begin
+        rdata_o                 <= 32'd0;
+    end
+end
 
 endmodule
