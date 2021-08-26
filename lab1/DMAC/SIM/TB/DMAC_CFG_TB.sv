@@ -44,14 +44,18 @@ module DMAC_CFG_TB ();
         @(posedge rst_n);                   // wait for a release of the reset
         repeat (10) @(posedge clk);         // wait another 10 cycles
 
+	#1
         // drive write signals
         wren                    = 1'b1;
         wdata                   = 32'h0123_4567;
         @(posedge clk);
 
+	#1
         wren                    = 1'b0;
         rden                    = 1'b1;
         @(posedge clk);
+
+	#1
         rden                    = 1'b0;
 
         if (rdata!== 32'h0123_4567) begin   // use !== to compare 4-state logic
