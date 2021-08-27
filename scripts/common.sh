@@ -3,7 +3,7 @@
 RUN_DIR=OUTPUT
 
 COMPILE_CMD='vcs'
-COMPILE_OPTIONS='-full64 -LDFLAGS -Wl,--no-as-needed -debug_access+r -kdb'
+COMPILE_OPTIONS='-full64 -debug_access+all -kdb'
 
 SIM_OPTIONS=''
 
