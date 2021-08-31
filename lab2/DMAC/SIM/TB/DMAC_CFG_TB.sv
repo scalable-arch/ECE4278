@@ -1,4 +1,4 @@
-module DMAC_TOP_TB ();
+module DMAC_CFG_TB ();
 
     reg                     clk;
     reg                     rst_n;
@@ -25,12 +25,6 @@ module DMAC_TOP_TB ();
     end
 
     APB                         apb_if  (.clk(clk));
-
-    AXI_AW_CH                   aw_ch   (.clk(clk));
-    AXI_W_CH                    w_ch    (.clk(clk));
-    AXI_B_CH                    b_ch    (.clk(clk));
-    AXI_AR_CH                   ar_ch   (.clk(clk));
-    AXI_R_CH                    r_ch    (.clk(clk));
 
     initial begin
         int data;
@@ -97,18 +91,7 @@ module DMAC_TOP_TB ();
     end
 
 
-    AXI_SLAVE   u_mem (
-        .clk                    (clk),
-        .rst_n                  (rst_n),
-        
-        .aw_ch                  (aw_ch),
-        .w_ch                   (w_ch),
-        .b_ch                   (b_ch),
-        .ar_ch                  (ar_ch),
-        .r_ch                   (r_ch)
-    );
-
-    DMAC_TOP  u_DUT (
+    DMAC_CFG  u_DUT (
         .clk                    (clk),
         .rst_n                  (rst_n),
 
@@ -122,45 +105,11 @@ module DMAC_TOP_TB ();
         .prdata_o               (apb_if.prdata),
         .pslverr_o              (apb_if.pslverr),
 
-        // AXI AW channel
-        .awid_o                 (aw_ch.awid),
-        .awaddr_o               (aw_ch.awaddr),
-        .awlen_o                (aw_ch.awlen),
-        .awsize_o               (aw_ch.awsize),
-        .awburst_o              (aw_ch.awburst),
-        .awvalid_o              (aw_ch.awvalid),
-        .awready_i              (aw_ch.awready),
-
-        // AXI W channel
-        .wid_o                  (w_ch.wid),
-        .wdata_o                (w_ch.wdata),
-        .wstrb_o                (w_ch.wstrb),
-        .wlast_o                (w_ch.wlast),
-        .wvalid_o               (w_ch.wvalid),
-        .wready_i               (w_ch.wready),
-
-        // AXI B channel
-        .bid_i                  (b_ch.bid),
-        .bresp_i                (b_ch.bresp),
-        .bvalid_i               (b_ch.bvalid),
-        .bready_o               (b_ch.bready),
-
-        // AXI AR channel
-        .arid_o                 (ar_ch.arid),
-        .araddr_o               (ar_ch.araddr),
-        .arlen_o                (ar_ch.arlen),
-        .arsize_o               (ar_ch.arsize),
-        .arburst_o              (ar_ch.arburst),
-        .arvalid_o              (ar_ch.arvalid),
-        .arready_i              (ar_ch.arready),
-
-        // AXI R channel
-        .rid_i                  (r_ch.rid),
-        .rdata_i                (r_ch.rdata),
-        .rresp_i                (r_ch.rresp),
-        .rlast_i                (r_ch.rlast),
-        .rvalid_i               (r_ch.rvalid),
-        .rready_o               (r_ch.rready)
+        .src_addr_o             (/* FLOATING */),
+        .dst_addr_o             (/* FLOATING */),
+        .byte_len_o             (/* FLOATING */),
+        .start_o                (/* FLOATING */),
+        .done_i                 (1'b1)
     );
 
 endmodule

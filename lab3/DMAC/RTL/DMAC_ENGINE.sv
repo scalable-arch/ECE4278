@@ -56,136 +56,136 @@ module DMAC_ENGINE
     output  wire                rready_o
 );
 
-localparam                      S_IDLE  = 3'd0,
+    localparam                  S_IDLE  = 3'd0,
                                 S_RREQ  = 3'd1,
                                 S_RDATA = 3'd2,
                                 S_WREQ  = 3'd3,
                                 S_WDATA = 3'd4;
-
-reg     [2:0]                   state,      state_n;
-
-reg     [31:0]                  src_addr,   src_addr_n;
-reg     [31:0]                  dst_addr,   dst_addr_n;
-reg     [11:0]                  cnt,        cnt_n;
-reg     [31:0]                  data_buf,   data_buf_n;
-
-reg                             arvalid,
+    
+    reg     [2:0]               state,      state_n;
+    
+    reg     [31:0]              src_addr,   src_addr_n;
+    reg     [31:0]              dst_addr,   dst_addr_n;
+    reg     [11:0]              cnt,        cnt_n;
+    reg     [31:0]              data_buf,   data_buf_n;
+    
+    reg                         arvalid,
                                 rready,
                                 awvalid,
                                 wvalid,
                                 done;
-
-always_ff @(posedge clk)
-    if (!rst_n) begin
-        state                   <= S_IDLE;
-
-        src_addr                <= 32'd0;
-        dst_addr                <= 32'd0;
-        cnt                     <= 12'd0;
-        data_buf                <= 32'd0;
-    end
-    else begin
-        state                   <= state_n;
-
-        src_addr                <= src_addr_n;
-        dst_addr                <= dst_addr_n;
-        cnt                     <= cnt_n;
-        data_buf                <= data_buf_n;
-    end
-
-
-always_comb
-begin
-    state_n                     = state;
-
-    src_addr_n                  = src_addr;
-    dst_addr_n                  = dst_addr;
-    cnt_n                       = cnt;
-    data_buf_n                  = data_buf;
-
-    arvalid                     = 1'b0;
-    rready                      = 1'b0;
-    awvalid                     = 1'b0;
-    wvalid                      = 1'b0;
-    done                        = 1'b0;
-
-    case (state)
-        S_IDLE: begin
-            done                        = 1'b1;
-            if (start_i & byte_len_i!=12'd0) begin
-                src_addr_n                  = src_addr_i;
-                dst_addr_n                  = dst_addr_i;
-                cnt_n                       = byte_len_i;
-
-                state_n                     = S_RREQ;
-            end
+    
+    always_ff @(posedge clk)
+        if (!rst_n) begin
+            state               <= S_IDLE;
+    
+            src_addr            <= 32'd0;
+            dst_addr            <= 32'd0;
+            cnt                 <= 12'd0;
+            data_buf            <= 32'd0;
         end
-        S_RREQ: begin
-            arvalid                     = 1'b1;
-
-            if (arready_i) begin
-                state_n                     = S_RDATA;
-                src_addr_n                  = src_addr + 'd4;
-            end
+        else begin
+            state               <= state_n;
+    
+            src_addr            <= src_addr_n;
+            dst_addr            <= dst_addr_n;
+            cnt                 <= cnt_n;
+            data_buf            <= data_buf_n;
         end
-        S_RDATA: begin
-            rready                      = 1'b1;
-
-            if (rvalid_i) begin
-                state_n                     = S_WREQ;
-                data_buf_n                  = rdata_i;
-            end
-        end
-        S_WREQ: begin
-            awvalid                     = 1'b1;
-
-            if (awready_i) begin
-                state_n                     = S_WDATA;
-                dst_addr_n                  = dst_addr + 'd4;
-                cnt_n                       = cnt - 12'd4;
-            end
-        end
-        S_WDATA: begin
-            wvalid                      = 1'b1;
-
-            if (wready_i) begin
-                if (cnt==12'd0) begin
-                    state_n                     = S_IDLE;
-                end
-                else begin
-                    state_n                     = S_RREQ;
+    
+    
+    always_comb
+    begin
+        state_n                 = state;
+    
+        src_addr_n              = src_addr;
+        dst_addr_n              = dst_addr;
+        cnt_n                   = cnt;
+        data_buf_n              = data_buf;
+    
+        arvalid                 = 1'b0;
+        rready                  = 1'b0;
+        awvalid                 = 1'b0;
+        wvalid                  = 1'b0;
+        done                    = 1'b0;
+    
+        case (state)
+            S_IDLE: begin
+                done                    = 1'b1;
+                if (start_i & byte_len_i!=12'd0) begin
+                    src_addr_n              = src_addr_i;
+                    dst_addr_n              = dst_addr_i;
+                    cnt_n                   = byte_len_i;
+    
+                    state_n                 = S_RREQ;
                 end
             end
-        end
-    endcase
-end
-
-// Output assigments
-assign  done_o                      = done;
-
-assign  awid_o                      = 4'd0;
-assign  awaddr_o                    = dst_addr;
-assign  awlen_o                     = 4'd0;     // 1-burst
-assign  awsize_o                    = 3'b010;   // 4 bytes per transfer
-assign  awburst_o                   = 2'b01;    // incremental
-assign  awvalid_o                   = awvalid;
-
-assign  wid_o                       = 4'd0;
-assign  wdata_o                     = data_buf;
-assign  wstrb_o                     = 4'b1111;  // all bytes within 4 byte are valid
-assign  wlast_o                     = 1'b1;
-assign  wvalid_o                    = wvalid;
-
-assign  bready_o                    = 1'b1;
-
-assign  arvalid_o                   = arvalid;
-assign  araddr_o                    = src_addr;
-assign  arid_o                      = 4'd0;
-assign  arlen_o                     = 4'd0;     // 1-burst
-assign  arsize_o                    = 3'b010;   // 4 bytes per transfer
-assign  arburst_o                   = 2'b01;    // incremental
-assign  arvalid_o                   = arvalid;
-
-assign  rready_o                    = rready;
+            S_RREQ: begin
+                arvalid                 = 1'b1;
+    
+                if (arready_i) begin
+                    state_n                 = S_RDATA;
+                    src_addr_n              = src_addr + 'd4;
+                end
+            end
+            S_RDATA: begin
+                rready                  = 1'b1;
+    
+                if (rvalid_i) begin
+                    state_n                 = S_WREQ;
+                    data_buf_n              = rdata_i;
+                end
+            end
+            S_WREQ: begin
+                awvalid                 = 1'b1;
+    
+                if (awready_i) begin
+                    state_n                 = S_WDATA;
+                    dst_addr_n              = dst_addr + 'd4;
+                    cnt_n                   = cnt - 12'd4;
+                end
+            end
+            S_WDATA: begin
+                wvalid                  = 1'b1;
+    
+                if (wready_i) begin
+                    if (cnt==12'd0) begin
+                        state_n                 = S_IDLE;
+                    end
+                    else begin
+                        state_n                 = S_RREQ;
+                    end
+                end
+            end
+        endcase
+    end
+    
+    // Output assigments
+    assign  done_o                  = done;
+    
+    assign  awid_o                  = 4'd0;
+    assign  awaddr_o                = dst_addr;
+    assign  awlen_o                 = 4'd0;     // 1-burst
+    assign  awsize_o                = 3'b010;   // 4 bytes per transfer
+    assign  awburst_o               = 2'b01;    // incremental
+    assign  awvalid_o               = awvalid;
+    
+    assign  wid_o                   = 4'd0;
+    assign  wdata_o                 = data_buf;
+    assign  wstrb_o                 = 4'b1111;  // all bytes within 4 byte are valid
+    assign  wlast_o                 = 1'b1;
+    assign  wvalid_o                = wvalid;
+    
+    assign  bready_o                = 1'b1;
+    
+    assign  arvalid_o               = arvalid;
+    assign  araddr_o                = src_addr;
+    assign  arid_o                  = 4'd0;
+    assign  arlen_o                 = 4'd0;     // 1-burst
+    assign  arsize_o                = 3'b010;   // 4 bytes per transfer
+    assign  arburst_o               = 2'b01;    // incremental
+    assign  arvalid_o               = arvalid;
+    
+    assign  rready_o                = rready;
 
 endmodule

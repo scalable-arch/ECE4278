@@ -4,7 +4,9 @@ module AXI_SLAVE
 #(
     parameter ADDR_WIDTH        = `AXI_ADDR_WIDTH,
     parameter DATA_WIDTH        = `AXI_DATA_WIDTH,
-    parameter ID_WIDTH          = `AXI_ID_WIDTH
+    parameter ID_WIDTH          = `AXI_ID_WIDTH,
+    parameter AWREADY_DELAY     = 1,
+    parameter ARREADY_DELAY     = 1,
 )
 (
     input   wire                clk,
@@ -17,14 +19,14 @@ module AXI_SLAVE
     AXI_R_CH                    r_ch
 );
 
-assign  aw_ch.awready           = 1'b1;
-assign  w_ch.wready             = 1'b1;
-assign  b_ch.bvalid             = 1'b1;
-assign  ar_ch.arready           = 1'b1;
-assign  r_ch.rvalid             = 1'b1;
+    assign  aw_ch.awready       = 1'b1;
+    assign  w_ch.wready         = 1'b1;
+    assign  b_ch.bvalid         = 1'b1;
+    assign  ar_ch.arready       = 1'b1;
+    assign  r_ch.rvalid         = 1'b1;
 
-//localparam  DATA_DEPTH          = 1<<ADDR_WIDTH;
+    //localparam  DATA_DEPTH      = 1<<ADDR_WIDTH;
 
-//logic   [7:0]                   mem[DATA_DEPTH];
+    logic   [7:0]               mem[DATA_DEPTH];
 
 endmodule
