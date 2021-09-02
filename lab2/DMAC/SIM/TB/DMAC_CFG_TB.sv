@@ -74,19 +74,57 @@ module DMAC_CFG_TB ();
             $finish;
         end
 
+        $display("---------------------------------------------------");
+        $display("Configuration test");
+        $display("---------------------------------------------------");
         apb_if.write(32'h100, 32'h1000);
+        apb_if.read(32'h100, data);
+        if (data===32'h1000)
+            $display("DMA_SRC(pass): %x", data);
+        else begin
+            $display("DMA_SRC(fail): %x", data);
+            @(posedge clk);
+            $finish;
+        end
         apb_if.write(32'h104, 32'h2000);
+        apb_if.read(32'h104, data);
+        if (data===32'h2000)
+            $display("DMA_DST(pass): %x", data);
+        else begin
+            $display("DMA_DST(fail): %x", data);
+            @(posedge clk);
+            $finish;
+        end
         apb_if.write(32'h108, 32'h100);
+        apb_if.read(32'h108, data);
+        if (data===32'h100)
+            $display("DMA_LEN(pass): %x", data);
+        else begin
+            $display("DMA_LEN(fail): %x", data);
+            @(posedge clk);
+            $finish;
+        end
+
+        $display("---------------------------------------------------");
+        $display("DMA start");
+        $display("---------------------------------------------------");
         apb_if.write(32'h10c, 32'h1);
 
+        $display("---------------------------------------------------");
+        $display("Wait for a DMA completion");
+        $display("---------------------------------------------------");
         data = 0;
         while (data!==1) begin
             apb_if.read(32'h110, data);
             repeat (100) @(posedge clk);
+            $write(".");
         end
+        $display("");
         @(posedge clk);
 
+        $display("---------------------------------------------------");
         $display("DMA completed");
+        $display("---------------------------------------------------");
         $finish;
     end
 

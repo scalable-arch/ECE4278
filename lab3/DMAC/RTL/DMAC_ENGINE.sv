@@ -56,6 +56,7 @@ module DMAC_ENGINE
     output  wire                rready_o
 );
 
+    // mnemonics for state values
     localparam                  S_IDLE  = 3'd0,
                                 S_RREQ  = 3'd1,
                                 S_RDATA = 3'd2,
@@ -75,6 +76,7 @@ module DMAC_ENGINE
                                 wvalid,
                                 done;
     
+    // it's desirable to code registers in a simple way
     always_ff @(posedge clk)
         if (!rst_n) begin
             state               <= S_IDLE;
@@ -94,6 +96,8 @@ module DMAC_ENGINE
         end
     
     
+    // this block programs output values and next register values
+    // based on states.
     always_comb
     begin
         state_n                 = state;

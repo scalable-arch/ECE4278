@@ -31,8 +31,27 @@ module DMAC_CFG
     reg     [31:0]              dst_addr;
     reg     [15:0]              byte_len;
 
+    //----------------------------------------------------------
     // Write
-    wire    write_en            = psel_i & penable_i & pwrite_i;
+    //----------------------------------------------------------
+    // an APB write occurs when PSEL & PENABLE & PWRITE
+    // clk     : __--__--__--__--__--__--__--__--__--__--
+    // psel    : ___--------_____________________________
+    // penable : _______----_____________________________
+    // pwrite  : ___--------_____________________________
+    // wren    : _______----_____________________________
+    //
+    // DMA start command must be asserted when APB writes 1 to the DMA_CMD
+    // register
+    // clk     : __--__--__--__--__--__--__--__--__--__--
+    // psel    : ___--------_____________________________
+    // penable : _______----_____________________________
+    // pwrite  : ___--------_____________________________
+    // paddr   :    |DMA_CMD|
+    // pwdata  :    |   1   |
+    // start   : _______----_____________________________
+    
+    wire    wren                = psel_i & penable_i & pwrite_i;
     
     always @(posedge clk) begin
         if (!rst_n) begin
@@ -40,7 +59,7 @@ module DMAC_CFG
             dst_addr            <= 32'd0;
             byte_len            <= 16'd0;
         end
-        else if (write_en) begin
+        else if (wren) begin
             case (paddr_i)
                 'h100: src_addr         <= pwdata_i[31:0];
                 'h104: dst_addr         <= pwdata_i[31:0];
@@ -48,11 +67,24 @@ module DMAC_CFG
             endcase
         end
     end
-    wire    start               = write_en & (paddr_i=='h10C) & pwdata_i[0];
-    
+    wire    start               = wren & (paddr_i=='h10C) & pwdata_i[0];
+
     // Read
     reg     [31:0]              rdata;
     
+    //----------------------------------------------------------
+    // READ
+    //----------------------------------------------------------
+    // an APB read occurs when PSEL & PENABLE & !PWRITE
+    // To make read data a direct output from register,
+    // this code shall buffer the muxed read data into a register
+    // in the SETUP cycle (PSEL & !PENABLE)
+    // clk        : __--__--__--__--__--__--__--__--__--__--
+    // psel       : ___--------_____________________________
+    // penable    : _______----_____________________________
+    // pwrite     : ________________________________________
+    // reg update : ___----_________________________________
+    //
     always @(posedge clk) begin
         if (!rst_n) begin
             rdata               <= 32'd0;

@@ -32,6 +32,9 @@ module DMAC_TOP_TB ();
     AXI_AR_CH                   ar_ch   (.clk(clk));
     AXI_R_CH                    r_ch    (.clk(clk));
 
+    int             src,
+                    dst,
+                    len;
     initial begin
         int data;
         apb_if.init();
@@ -80,19 +83,84 @@ module DMAC_TOP_TB ();
             $finish;
         end
 
-        apb_if.write(32'h100, 32'h1000);
-        apb_if.write(32'h104, 32'h2000);
-        apb_if.write(32'h108, 32'h100);
+        src = 'h1000;
+        dst = 'h2000;
+        len = 'h100;
+
+        $display("---------------------------------------------------");
+        $display("Load data to memory");
+        $display("---------------------------------------------------");
+        for (int i=src; i<(src+len); i=i+4) begin
+            u_mem.write_word(i, i);
+        end
+
+        $display("---------------------------------------------------");
+        $display("Configuration test");
+        $display("---------------------------------------------------");
+        apb_if.write(32'h100, src);
+        apb_if.read(32'h100, data);
+        if (data===src)
+            $display("DMA_SRC(pass): %x", data);
+        else begin
+            $display("DMA_SRC(fail): %x", data);
+            @(posedge clk);
+            $finish;
+        end
+        apb_if.write(32'h104, dst);
+        apb_if.read(32'h104, data);
+        if (data===dst)
+            $display("DMA_DST(pass): %x", data);
+        else begin
+            $display("DMA_DST(fail): %x", data);
+            @(posedge clk);
+            $finish;
+        end
+        apb_if.write(32'h108, len);
+        apb_if.read(32'h108, data);
+        if (data===len)
+            $display("DMA_LEN(pass): %x", data);
+        else begin
+            $display("DMA_LEN(fail): %x", data);
+            @(posedge clk);
+            $finish;
+        end
+
+        $display("---------------------------------------------------");
+        $display("DMA start");
+        $display("---------------------------------------------------");
         apb_if.write(32'h10c, 32'h1);
 
+        $display("---------------------------------------------------");
+        $display("Wait for a DMA completion");
+        $display("---------------------------------------------------");
         data = 0;
         while (data!==1) begin
             apb_if.read(32'h110, data);
             repeat (100) @(posedge clk);
+            $write(".");
         end
+        $display("");
         @(posedge clk);
 
+        $display("---------------------------------------------------");
         $display("DMA completed");
+        $display("---------------------------------------------------");
+
+        repeat (100) @(posedge clk);    // to make sure data is written
+
+        $display("---------------------------------------------------");
+        $display("verify data");
+        $display("---------------------------------------------------");
+        for (int i=0; i<len; i=i+4) begin
+            logic [31:0]        src_word;
+            logic [31:0]        dst_word;
+            src_word            = u_mem.read_word(src+i);
+            dst_word            = u_mem.read_word(dst+i);
+            if (src_word!==dst_word) begin
+                $display("Mismatch! (src:%x @%x, dst:%x @%x", src_word, src+i, dst_word, dst+i);
+            end
+        end
+
         $finish;
     end
 
