@@ -21,7 +21,7 @@ module DMAC_CFG
     // configuration registers
     output  reg     [31:0]      src_addr_o,
     output  reg     [31:0]      dst_addr_o,
-    output  reg     [11:0]      byte_len_o,
+    output  reg     [15:0]      byte_len_o,
     output  wire                start_o,
     input   wire                done_i
 );
@@ -29,7 +29,7 @@ module DMAC_CFG
     // Configuration register to read/write
     reg     [31:0]              src_addr;
     reg     [31:0]              dst_addr;
-    reg     [11:0]              byte_len;
+    reg     [15:0]              byte_len;
 
     // Write
     wire    write_en            = psel_i & penable_i & pwrite_i;
@@ -38,13 +38,13 @@ module DMAC_CFG
         if (!rst_n) begin
             src_addr            <= 32'd0;
             dst_addr            <= 32'd0;
-            byte_len            <= 12'd0;
+            byte_len            <= 16'd0;
         end
         else if (write_en) begin
             case (paddr_i)
                 'h100: src_addr         <= pwdata_i[31:0];
                 'h104: dst_addr         <= pwdata_i[31:0];
-                'h108: byte_len         <= pwdata_i[11:0];
+                'h108: byte_len         <= pwdata_i[15:0];
             endcase
         end
     end
@@ -62,7 +62,7 @@ module DMAC_CFG
                 'h0:   rdata            <= 32'h0001_0101;
                 'h100: rdata            <= src_addr;
                 'h104: rdata            <= dst_addr;
-                'h108: rdata            <= {20'd0, byte_len};
+                'h108: rdata            <= {16'd0, byte_len};
                 'h110: rdata            <= {31'd0, done_i};
                 default: rdata          <= 32'd0;
             endcase

@@ -11,7 +11,7 @@ module DMAC_ENGINE
     // configuration registers
     input   wire    [31:0]      src_addr_i,
     input   wire    [31:0]      dst_addr_i,
-    input   wire    [11:0]      byte_len_i,
+    input   wire    [15:0]      byte_len_i,
     input   wire                start_i,
     output  wire                done_o,
 
@@ -66,7 +66,7 @@ module DMAC_ENGINE
     
     reg     [31:0]              src_addr,   src_addr_n;
     reg     [31:0]              dst_addr,   dst_addr_n;
-    reg     [11:0]              cnt,        cnt_n;
+    reg     [15:0]              cnt,        cnt_n;
     reg     [31:0]              data_buf,   data_buf_n;
     
     reg                         arvalid,
@@ -81,7 +81,7 @@ module DMAC_ENGINE
     
             src_addr            <= 32'd0;
             dst_addr            <= 32'd0;
-            cnt                 <= 12'd0;
+            cnt                 <= 16'd0;
             data_buf            <= 32'd0;
         end
         else begin
@@ -112,7 +112,7 @@ module DMAC_ENGINE
         case (state)
             S_IDLE: begin
                 done                    = 1'b1;
-                if (start_i & byte_len_i!=12'd0) begin
+                if (start_i & byte_len_i!=16'd0) begin
                     src_addr_n              = src_addr_i;
                     dst_addr_n              = dst_addr_i;
                     cnt_n                   = byte_len_i;
@@ -142,14 +142,14 @@ module DMAC_ENGINE
                 if (awready_i) begin
                     state_n                 = S_WDATA;
                     dst_addr_n              = dst_addr + 'd4;
-                    cnt_n                   = cnt - 12'd4;
+                    cnt_n                   = cnt - 16'd4;
                 end
             end
             S_WDATA: begin
                 wvalid                  = 1'b1;
     
                 if (wready_i) begin
-                    if (cnt==12'd0) begin
+                    if (cnt==16'd0) begin
                         state_n                 = S_IDLE;
                     end
                     else begin

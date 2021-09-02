@@ -61,7 +61,7 @@ module DMAC_TOP
 
     wire    [31:0]              src_addr;
     wire    [31:0]              dst_addr;
-    wire    [11:0]              byte_len;
+    wire    [15:0]              byte_len;
     wire                        start;
     wire                        done;
     
