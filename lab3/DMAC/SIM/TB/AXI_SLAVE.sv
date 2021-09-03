@@ -247,6 +247,7 @@ module AXI_SLAVE
 
     // output assignments
     assign  b_ch.bid            = wid;
+    assign  b_ch.bresp          = 2'd0;
     assign  r_ch.rid            = rid;
     assign  r_ch.rresp          = 2'd0;
 
