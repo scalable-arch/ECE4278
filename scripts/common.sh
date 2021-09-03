@@ -13,3 +13,5 @@ WAVE_OPTIONS='-p wfp'
 VERDI_CMD='Verdi-SX'
 VERDI_OPTIONS=''
 
+DC_CMD='dc_shell-xg-t'
+DC_OPTIONS=''
