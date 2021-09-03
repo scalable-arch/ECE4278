@@ -50,9 +50,9 @@ module DMAC_CFG
     // paddr   :    |DMA_CMD|
     // pwdata  :    |   1   |
     // start   : _______----_____________________________
-    
+
     wire    wren                = psel_i & penable_i & pwrite_i;
-    
+
     always @(posedge clk) begin
         if (!rst_n) begin
             src_addr            <= 32'd0;
@@ -71,7 +71,7 @@ module DMAC_CFG
 
     // Read
     reg     [31:0]              rdata;
-    
+
     //----------------------------------------------------------
     // READ
     //----------------------------------------------------------
@@ -100,12 +100,12 @@ module DMAC_CFG
             endcase
         end
     end
-    
+
     // output assignments
     assign  pready_o            = 1'b1;
     assign  prdata_o            = rdata;
     assign  pslverr_o           = 1'b0;
-    
+
     assign  src_addr_o          = src_addr;
     assign  dst_addr_o          = dst_addr;
     assign  byte_len_o          = byte_len;
