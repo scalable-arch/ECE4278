@@ -45,7 +45,7 @@ uniquify
 # Clock
 # Reduce clock period to model wire delay (60% of original period)
 set delay_percentage 0.6
-set clk_period [expr 1 / $clk_freq]
+set clk_period [expr 1000 / $clk_freq]
 set clk_period [expr $clk_period * $delay_percentage]
 # Create real clock if clock port is found
 if {[sizeof_collection [get_ports $clk_port_name]] > 0} {
