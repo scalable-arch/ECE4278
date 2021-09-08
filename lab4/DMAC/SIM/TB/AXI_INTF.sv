@@ -151,6 +151,12 @@ interface APB (
             @(posedge clk);
         end
         data                    = prdata;
+
+        psel                    = 1'b0;
+        penable                 = 1'b0;
+        paddr                   = 'hX;
+        pwrite                  = 1'bx;
+        pwdata                  = 'hX;
     endtask
 
 endinterface
