@@ -1,65 +1,72 @@
 # ---------------------------------------
-# DESIGN PROFILE
+# Step 1: Specify libraries
 # ---------------------------------------
+set link_library \
+[list /home/ScalableArchiLab/SAED32_EDK/lib/stdcell_lvt/db_ccs/saed32lvt_ss0p75v125c.db ]
+set target_library \
+[list /home/ScalableArchiLab/SAED32_EDK/lib/stdcell_lvt/db_ccs/saed32lvt_ss0p75v125c.db ]
+
+# ---------------------------------------
+# Step 2: Read designs
+# ---------------------------------------
+analyze -format sverilog $env(LAB_PATH)/RTL/DMAC_CFG.sv
+analyze -format sverilog $env(LAB_PATH)/RTL/DMAC_ENGINE.sv
+analyze -format sverilog $env(LAB_PATH)/RTL/DMAC_FIFO.sv
+analyze -format sverilog $env(LAB_PATH)/RTL/DMAC_TOP.sv
+
 set design_name         DMAC_TOP
-set clk_port_name       clk
-set clk_freq            200
+elaborate $design_name
 
-# ---------------------------------------
-# Read Libraries
-# ---------------------------------------
-set LIBLIST_PATH        $env(LIBLIST_PATH)
-source $LIBLIST_PATH
-
-# ---------------------------------------
-# 0. Read Source Codes
-# ---------------------------------------
-set LAB_PATH            $env(LAB_PATH)
-read_file $LAB_PATH/RTL/ -autoread -recursive -format sverilog -top $design_name
-
-# ---------------------------------------
-# 1. Environments Setting
-# ---------------------------------------
+# connect all the library components and designs
 link
+
+# renames multiply references designs so that each
+# instance references a unique design
 uniquify
 
 # ---------------------------------------
-# 2. Constraints Setting
+# Step 3: Define design environments
+# ---------------------------------------
+#
+# ---------------------------------------
+# Step 4: Set design constraints
+# ---------------------------------------
 # ---------------------------------------
 # Clock
+# ---------------------------------------
+set clk_name clk
+set clk_freq            200
+
 # Reduce clock period to model wire delay (60% of original period)
-set delay_percentage 0.6
+set derating 0.6
 set clk_period [expr 1000 / double($clk_freq)]
-set clk_period [expr $clk_period * $delay_percentage]
+set clk_period [expr $clk_period * $derating]
 
-# Create real clock if clock port is found
-if {[sizeof_collection [get_ports $clk_port_name]] > 0} {
-	set clk_name $clk_port_name
-    create_clock -period $clk_period $clk_name
-    # Set infinite drive strength
-	set_drive 0 $clk_name
-}
-# Create virtual clock if clock port is not found
-elseif {[sizeof_collection [get_ports $clk_port_name]] == 0} {
-	set clk_name vclk
-		create_clock -period $clk_period -name $clk_name
-}
+create_clock -period $clk_period $clk_name
+# Set infinite drive strength
+set_drive 0 $clk_name
+
+# ---------------------------------------
+# Input/Output
+# ---------------------------------------
 # Apply default timing constraints for modules
-set_input_delay  0.0 [all_inputs] -clock $clk_name
-set_output_delay 0.0 [all_outputs] -clock $clk_name
+set_input_delay  1.0 [all_inputs] -clock $clk_name
+set_output_delay 1.0 [all_outputs] -clock $clk_name
 
+# ---------------------------------------
 # Area
+# ---------------------------------------
 # If max_area is set 0, DesignCompiler will minimize the design as small as possible
 set_max_area 0 
 
 # ---------------------------------------
-# 3. Compilation
+# Step 5: Synthesize and optimzie the design
 # ---------------------------------------
-#compile_ultra
-compile
+compile_ultra
+#compile
 
 # ---------------------------------------
-# 4. Design Reports
+# Step 6: Analyze and resolve design problems
 # ---------------------------------------
 check_design  > $design_name.check_design.rpt
 
@@ -76,9 +83,9 @@ report_timing -nworst 10 -max_paths 10 > $design_name.timing.rpt
 report_power -analysis_effort high > $design_name.power.rpt
 report_threshold_voltage_group > $design_name.vth.rpt
 
-# Dump out the gate-level-netlist
+# ---------------------------------------
+# Step 7: Save the design database
+# ---------------------------------------
 write -hierarchy -format verilog -output  $design_name.netlist.v
 
 exit
-
-

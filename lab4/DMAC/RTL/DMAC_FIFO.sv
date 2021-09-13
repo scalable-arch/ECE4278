@@ -70,6 +70,7 @@ module DMAC_FIFO #(
 
     end
 
+    // synthesis translate_off
     always @(posedge clk) begin
         if (full_o & wren_i) begin
             $display("FIFO overflow");
@@ -85,6 +86,7 @@ module DMAC_FIFO #(
             $finish;
         end
     end
+    // synthesis translate_on
 
     assign  full_o                      = full;
     assign  empty_o                     = empty;
