@@ -85,7 +85,7 @@ module DMAC_CFG
 
     reg     [31:0]              rdata;
 
-    always @(posedge clk) begin
+    always_ff @(posedge clk) begin
         if (!rst_n) begin
             rdata               <= 32'd0;
         end
