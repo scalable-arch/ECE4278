@@ -69,9 +69,6 @@ module DMAC_CFG
     end
     wire    start               = wren & (paddr_i=='h10C) & pwdata_i[0];
 
-    // Read
-    reg     [31:0]              rdata;
-
     //----------------------------------------------------------
     // READ
     //----------------------------------------------------------
@@ -84,7 +81,10 @@ module DMAC_CFG
     // penable    : _______----_____________________________
     // pwrite     : ________________________________________
     // reg update : ___----_________________________________
-    //
+    // prdata     :        |DATA
+
+    reg     [31:0]              rdata;
+
     always @(posedge clk) begin
         if (!rst_n) begin
             rdata               <= 32'd0;
