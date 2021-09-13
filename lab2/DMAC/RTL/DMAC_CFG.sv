@@ -53,7 +53,7 @@ module DMAC_CFG
 
     wire    wren                = psel_i & penable_i & pwrite_i;
 
-    always @(posedge clk) begin
+    always_ff @(posedge clk) begin
         if (!rst_n) begin
             src_addr            <= 32'd0;
             dst_addr            <= 32'd0;
@@ -84,8 +84,9 @@ module DMAC_CFG
     // penable    : _______----_____________________________
     // pwrite     : ________________________________________
     // reg update : ___----_________________________________
+    // prdata     :       |data
     //
-    always @(posedge clk) begin
+    always_ff @(posedge clk) begin
         if (!rst_n) begin
             rdata               <= 32'd0;
         end

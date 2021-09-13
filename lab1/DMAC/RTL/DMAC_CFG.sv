@@ -1,3 +1,8 @@
+// Copyright (c) 2021 Sungkyunkwan University
+//
+// Authors:
+// - Jungrae Kim <dale40@skku.edu>
+
 module DMAC_CFG
 (
     input   wire                clk,
@@ -13,14 +18,32 @@ module DMAC_CFG
 // Configuration register to read/write
 reg [31:0]                        cfg_reg;
 
-always @(posedge clk) begin
+// use SRAM-like interface to read/write SFR
+
+//----------------------------------------------------------
+// write operation
+//----------------------------------------------------------
+// clk         : __--__--__--__--__--__--__--
+// wren        : ___----____________________
+// wdata       :   |dat|
+//
+// updated reg :       |data
+always_ff @(posedge clk) begin  // sync reset
     if (!rst_n) begin
         cfg_reg                 <= 32'd0;
     end
     else if (wren_i) begin
         cfg_reg                 <= wdata_i;
     end
+end
 
+//----------------------------------------------------------
+// read operation
+//----------------------------------------------------------
+// clk   : __--__--__--__--__--__--__--
+// rden  : ___----____________________
+// rdata :       |dat|
+always_ff @(posedge clk) begin  // sync reset
     if (rden_i) begin
         rdata_o                 <= cfg_reg;
     end
