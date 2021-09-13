@@ -12,7 +12,9 @@ rm -rf $RUN_DIR
 echo "Creating a new directory"
 mkdir -p $RUN_DIR
 cd $RUN_DIR
-echo "Compiling"
+echo "Synthesizing"
 
 $DC_CMD $DC_OPTIONS -f $SCRIPT_PATH | tee ./dc_shell.log
+echo "Synthesis Completed"
+rm -rf *.pvl *.syn *.mr command.log default.svf
 

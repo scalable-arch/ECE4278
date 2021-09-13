@@ -12,26 +12,10 @@ set LIBLIST_PATH        $env(LIBLIST_PATH)
 source $LIBLIST_PATH
 
 # ---------------------------------------
-# Parse Source Codes
-# ---------------------------------------
-set LAB_PATH            $env(LAB_PATH)
-set FILELIST_RTL        $env(FILELIST_RTL)
-
-set FILE [open $FILELIST_RTL]
-set lines [split [read $FILE] "\n"]
-close $FILE;
-set sources []
-foreach line $lines {
-    if {$line == ""} { continue }
-    set src [lindex [split $line " "] 1]
-    eval "set src $src"
-    lappend sources $src
-}
-
-# ---------------------------------------
 # 0. Read Source Codes
 # ---------------------------------------
-read_file -format sverilog $sources
+set LAB_PATH            $env(LAB_PATH)
+read_file $LAB_PATH/RTL/ -autoread -recursive -format sverilog -top $design_name
 
 # ---------------------------------------
 # 1. Environments Setting
@@ -45,21 +29,20 @@ uniquify
 # Clock
 # Reduce clock period to model wire delay (60% of original period)
 set delay_percentage 0.6
-set clk_period [expr 1000 / $clk_freq]
+set clk_period [expr 1000 / double($clk_freq)]
 set clk_period [expr $clk_period * $delay_percentage]
+
 # Create real clock if clock port is found
 if {[sizeof_collection [get_ports $clk_port_name]] > 0} {
-	set clk_name clk
-		create_clock -period $clk_period clk
+	set clk_name $clk_port_name
+    create_clock -period $clk_period $clk_name
+    # Set infinite drive strength
+	set_drive 0 $clk_name
 }
 # Create virtual clock if clock port is not found
-if {[sizeof_collection [get_ports $clk_port_name]] == 0} {
+elseif {[sizeof_collection [get_ports $clk_port_name]] == 0} {
 	set clk_name vclk
-		create_clock -period $clk_period -name vclk
-}
-# If real clock, set infinite drive strength
-if {[sizeof_collection [get_ports clk]] > 0} {
-	set_drive 0 clk
+		create_clock -period $clk_period -name $clk_name
 }
 # Apply default timing constraints for modules
 set_input_delay  0.0 [all_inputs] -clock $clk_name
