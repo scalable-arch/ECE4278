@@ -24,7 +24,7 @@ module DMAC_ENGINE
     output  wire                awvalid_o,
     input   wire                awready_i,
 
-    // AMBA AXI interface (AW channel)
+    // AMBA AXI interface (W channel)
     output  wire    [3:0]       wid_o,
     output  wire    [31:0]      wdata_o,
     output  wire    [3:0]       wstrb_o,

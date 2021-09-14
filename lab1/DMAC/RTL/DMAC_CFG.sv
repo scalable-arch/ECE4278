@@ -42,13 +42,13 @@ end
 //----------------------------------------------------------
 // clk   : __--__--__--__--__--__--__--
 // rden  : ___----____________________
-// rdata :       |dat|
+// rdata :       |data
 always_ff @(posedge clk) begin  // sync reset
-    if (rden_i) begin
-        rdata_o                 <= cfg_reg;
-    end
-    else begin
+    if (!rst_n) begin
         rdata_o                 <= 32'd0;
+    end
+    else if (rden_i) begin
+        rdata_o                 <= cfg_reg;
     end
 end
 

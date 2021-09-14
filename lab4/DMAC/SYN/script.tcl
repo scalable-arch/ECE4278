@@ -38,20 +38,22 @@ set clk_name clk
 set clk_freq            200
 
 # Reduce clock period to model wire delay (60% of original period)
-set derating 0.6
 set clk_period [expr 1000 / double($clk_freq)]
-set clk_period [expr $clk_period * $derating]
-
 create_clock -period $clk_period $clk_name
+set clk_uncertainty [expr $clk_period * 0.35]
+set_clock_uncertainty -setup $clk_uncertainty $clk_name
+set_clock_uncertainty -hold  $clk_uncertainty $clk_name
+
 # Set infinite drive strength
 set_drive 0 $clk_name
+set_ideal_network rst_n
 
 # ---------------------------------------
 # Input/Output
 # ---------------------------------------
 # Apply default timing constraints for modules
-set_input_delay  1.0 [all_inputs] -clock $clk_name
-set_output_delay 1.0 [all_outputs] -clock $clk_name
+set_input_delay  2.0 [all_inputs]  -clock $clk_name
+set_output_delay 2.0 [all_outputs] -clock $clk_name
 
 # ---------------------------------------
 # Area
@@ -72,20 +74,23 @@ check_design  > $design_name.check_design.rpt
 
 report_constraint -all_violators -verbose -sig 10 > $design_name.all_viol.rpt
 
-report_design > $design_name.design.rpt
-report_area -physical -hierarchy > $design_name.area.rpt
-report_cell > $design_name.cell.rpt
-report_qor > $design_name.qor.rpt
-report_reference > $design_name.reference.rpt
-report_resources > $design_name.resources.rpt
-report_hierarchy -full > $design_name.hierarchy.rpt
-report_timing -nworst 10 -max_paths 10 > $design_name.timing.rpt
-report_power -analysis_effort high > $design_name.power.rpt
-report_threshold_voltage_group > $design_name.vth.rpt
+report_design                             > $design_name.design.rpt
+report_area -physical -hierarchy          > $design_name.area.rpt
+report_timing -nworst 10 -max_paths 10    > $design_name.timing.rpt
+report_power -analysis_effort high        > $design_name.power.rpt
+report_cell                               > $design_name.cell.rpt
+report_qor                                > $design_name.qor.rpt
+report_reference                          > $design_name.reference.rpt
+report_resources                          > $design_name.resources.rpt
+report_hierarchy -full                    > $design_name.hierarchy.rpt
+report_threshold_voltage_group            > $design_name.vth.rpt
 
 # ---------------------------------------
 # Step 7: Save the design database
 # ---------------------------------------
 write -hierarchy -format verilog -output  $design_name.netlist.v
+write -hierarchy -format ddc     -output  $design_name.ddc
+write_sdf -version 1.0                    $design_name.sdf
+write_sdc                                 $design_name.sdc
 
 exit
