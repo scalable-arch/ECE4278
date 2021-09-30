@@ -77,7 +77,7 @@ module DMAC_ENGINE
                                 done;
 
     // it's desirable to code registers in a simple way
-    always_ff @(posedge clk) : begin
+    always_ff @(posedge clk) begin
         if (!rst_n) begin
             state               <= S_IDLE;
 
@@ -98,7 +98,7 @@ module DMAC_ENGINE
 
     // this block programs output values and next register values
     // based on states.
-    always_comb : begin
+    always_comb begin
         state_n                 = state;
 
         src_addr_n              = src_addr;
@@ -149,7 +149,6 @@ module DMAC_ENGINE
 
     assign  bready_o                = 1'b1;
 
-    assign  arvalid_o               = arvalid;
     assign  araddr_o                = src_addr;
     assign  arid_o                  = 4'd0;
     assign  arlen_o                 = 4'd0;     // 1-burst
