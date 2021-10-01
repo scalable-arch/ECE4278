@@ -1,3 +1,9 @@
+`define     IP_VER      32'h000
+`define     SRC_ADDR    32'h100
+`define     DST_ADDR    32'h104
+`define     LEN_ADDR    32'h108
+`define     STAT_ADDR   32'h110
+`define     START_ADDR  32'h10c
 module DMAC_TOP_TB ();
 
     reg                     clk;
@@ -18,12 +24,6 @@ module DMAC_TOP_TB ();
         rst_n                   = 1'b1;     // release the reset
     end
 
-    // enable waveform dump
-    initial begin
-        $dumpvars(0, u_DUT);
-        $dumpfile("dump.vcd");
-    end
-
     APB                         apb_if  (.clk(clk));
 
     AXI_AW_CH                   aw_ch   (.clk(clk));
@@ -32,17 +32,14 @@ module DMAC_TOP_TB ();
     AXI_AR_CH                   ar_ch   (.clk(clk));
     AXI_R_CH                    r_ch    (.clk(clk));
 
-    int             src,
-                    dst,
-                    len;
-    initial begin
+    task test_rst();
         int data;
         apb_if.init();
 
         @(posedge rst_n);                   // wait for a release of the reset
         repeat (10) @(posedge clk);         // wait another 10 cycles
 
-        apb_if.read(32'h0, data);
+        apb_if.read(`IP_VER, data);
         $display("---------------------------------------------------");
         $display("IP version: %x", data);
         $display("---------------------------------------------------");
@@ -50,7 +47,7 @@ module DMAC_TOP_TB ();
         $display("---------------------------------------------------");
         $display("Reset value test");
         $display("---------------------------------------------------");
-        apb_if.read(32'h100, data);
+        apb_if.read(`SRC_ADDR, data);
         if (data===0)
             $display("DMA_SRC(pass): %x", data);
         else begin
@@ -58,7 +55,7 @@ module DMAC_TOP_TB ();
             @(posedge clk);
             $finish;
         end
-        apb_if.read(32'h104, data);
+        apb_if.read(`DST_ADDR, data);
         if (data===0)
             $display("DMA_DST(pass): %x", data);
         else begin
@@ -66,7 +63,7 @@ module DMAC_TOP_TB ();
             @(posedge clk);
             $finish;
         end
-        apb_if.read(32'h108, data);
+        apb_if.read(`LEN_ADDR, data);
         if (data===0)
             $display("DMA_LEN(pass): %x", data);
         else begin
@@ -74,7 +71,7 @@ module DMAC_TOP_TB ();
             @(posedge clk);
             $finish;
         end
-        apb_if.read(32'h110, data);
+        apb_if.read(`STAT_ADDR, data);
         if (data===1)
             $display("DMA_STATUS(pass): %x", data);
         else begin
@@ -82,23 +79,25 @@ module DMAC_TOP_TB ();
             @(posedge clk);
             $finish;
         end
+    endtask
 
-        src = 'h1000;
-        dst = 'h2000;
-        len = 'h100;
+    task test_dma(input int src, input int dst, input int len);
+        int data;
+        int word;
 
         $display("---------------------------------------------------");
         $display("Load data to memory");
         $display("---------------------------------------------------");
         for (int i=src; i<(src+len); i=i+4) begin
-            u_mem.write_word(i, i);
+            word = $random; 
+            u_mem.write_word(i, word);
         end
 
         $display("---------------------------------------------------");
         $display("Configuration test");
         $display("---------------------------------------------------");
-        apb_if.write(32'h100, src);
-        apb_if.read(32'h100, data);
+        apb_if.write(`SRC_ADDR, src);
+        apb_if.read(`SRC_ADDR, data);
         if (data===src)
             $display("DMA_SRC(pass): %x", data);
         else begin
@@ -106,8 +105,8 @@ module DMAC_TOP_TB ();
             @(posedge clk);
             $finish;
         end
-        apb_if.write(32'h104, dst);
-        apb_if.read(32'h104, data);
+        apb_if.write(`DST_ADDR, dst);
+        apb_if.read(`DST_ADDR, data);
         if (data===dst)
             $display("DMA_DST(pass): %x", data);
         else begin
@@ -115,8 +114,8 @@ module DMAC_TOP_TB ();
             @(posedge clk);
             $finish;
         end
-        apb_if.write(32'h108, len);
-        apb_if.read(32'h108, data);
+        apb_if.write(`LEN_ADDR, len);
+        apb_if.read(`LEN_ADDR, data);
         if (data===len)
             $display("DMA_LEN(pass): %x", data);
         else begin
@@ -128,16 +127,15 @@ module DMAC_TOP_TB ();
         $display("---------------------------------------------------");
         $display("DMA start");
         $display("---------------------------------------------------");
-        apb_if.write(32'h10c, 32'h1);
+        apb_if.write(`START_ADDR, 32'h1);
 
         $display("---------------------------------------------------");
         $display("Wait for a DMA completion");
         $display("---------------------------------------------------");
         data = 0;
-        while (data!==1) begin
-            apb_if.read(32'h110, data);
+        while (data!=1) begin
+            apb_if.read(`STAT_ADDR, data);
             repeat (100) @(posedge clk);
-            $write(".");
         end
         $display("");
         @(posedge clk);
@@ -146,7 +144,7 @@ module DMAC_TOP_TB ();
         $display("DMA completed");
         $display("---------------------------------------------------");
 
-        repeat (100) @(posedge clk);    // to make sure data is written
+        repeat (len) @(posedge clk);    // to make sure data is written
 
         $display("---------------------------------------------------");
         $display("verify data");
@@ -160,7 +158,50 @@ module DMAC_TOP_TB ();
                 $display("Mismatch! (src:%x @%x, dst:%x @%x", src_word, src+i, dst_word, dst+i);
             end
         end
+    endtask
 
+    int             src,
+                    dst,
+                    len;
+
+    initial begin
+        test_rst();
+
+        $display("===================================================");
+        $display("================== First trial ====================");
+        $display("===================================================");
+        src = 'h0000_1000;
+        dst = 'h0000_2000;
+        len = 'h0100;
+        test_dma(src, dst, len);
+        $display("===================================================");
+        $display("================= Second trial ====================");
+        $display("===================================================");
+        src = 'h1234_1234;
+        dst = 'hABCD_ABCD;
+        len = 'hFF00;
+        test_dma(src, dst, len);
+        $display("===================================================");
+        $display("================== Third trial ====================");
+        $display("===================================================");
+        src = 'h1BAD_B002;
+        dst = 'h8BAD_F00D;
+        len = 'hA1C8;
+        test_dma(src, dst, len);
+        $display("===================================================");
+        $display("================= Fourth trial ====================");
+        $display("===================================================");
+        src = 'hDEFE_C8ED;
+        dst = 'h1234_1234;
+        len = 'hFF00;
+        test_dma(src, dst, len);
+        $display("===================================================");
+        $display("================== Fifth trial ====================");
+        $display("===================================================");
+        src = 'hDEAD_BEEF;
+        dst = 'hBEEF_DEAD;
+        len = 'h1234;
+        test_dma(src, dst, len);
         $finish;
     end
 
