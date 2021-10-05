@@ -24,6 +24,12 @@ module DMAC_TOP_TB ();
         rst_n                   = 1'b1;     // release the reset
     end
 
+    // enable waveform dump
+    initial begin
+        $dumpvars(0, u_DUT);
+        $dumpfile("dump.vcd");
+    end
+
     APB                         apb_if  (.clk(clk));
 
     AXI_AW_CH                   aw_ch   (.clk(clk));
@@ -32,7 +38,7 @@ module DMAC_TOP_TB ();
     AXI_AR_CH                   ar_ch   (.clk(clk));
     AXI_R_CH                    r_ch    (.clk(clk));
 
-    task test_rst();
+    task test_init();
         int data;
         apb_if.init();
 
@@ -84,6 +90,7 @@ module DMAC_TOP_TB ();
     task test_dma(input int src, input int dst, input int len);
         int data;
         int word;
+        realtime elapsed_time;
 
         $display("---------------------------------------------------");
         $display("Load data to memory");
@@ -128,6 +135,7 @@ module DMAC_TOP_TB ();
         $display("DMA start");
         $display("---------------------------------------------------");
         apb_if.write(`START_ADDR, 32'h1);
+        elapsed_time = $realtime;
 
         $display("---------------------------------------------------");
         $display("Wait for a DMA completion");
@@ -137,8 +145,10 @@ module DMAC_TOP_TB ();
             apb_if.read(`STAT_ADDR, data);
             repeat (100) @(posedge clk);
         end
-        $display("");
         @(posedge clk);
+        elapsed_time = $realtime - elapsed_time;
+        $timeformat(-9, 0, " ns", 10);
+        $display("Elapsed time for DMA: %t", elapsed_time);
 
         $display("---------------------------------------------------");
         $display("DMA completed");
@@ -164,8 +174,9 @@ module DMAC_TOP_TB ();
                     dst,
                     len;
 
+    // main
     initial begin
-        test_rst();
+        test_init();
 
         $display("===================================================");
         $display("================== First trial ====================");
@@ -184,23 +195,23 @@ module DMAC_TOP_TB ();
         $display("===================================================");
         $display("================== Third trial ====================");
         $display("===================================================");
-        src = 'h1BAD_B002;
-        dst = 'h8BAD_F00D;
-        len = 'hA1C8;
+        src = 'hDEFE_C8ED;
+        dst = 'h1234_1234;
+        len = 'h0040;
         test_dma(src, dst, len);
         $display("===================================================");
         $display("================= Fourth trial ====================");
         $display("===================================================");
-        src = 'hDEFE_C8ED;
-        dst = 'h1234_1234;
-        len = 'hFF00;
+        src = 'h0101_0101;
+        dst = 'h1010_1010;
+        len = 'h2480;
         test_dma(src, dst, len);
         $display("===================================================");
         $display("================== Fifth trial ====================");
         $display("===================================================");
-        src = 'hDEAD_BEEF;
-        dst = 'hBEEF_DEAD;
-        len = 'h1234;
+        src = 'h0000_2000;
+        dst = 'h0000_4000;
+        len = 'h0200;
         test_dma(src, dst, len);
         $finish;
     end
@@ -209,7 +220,7 @@ module DMAC_TOP_TB ();
     AXI_SLAVE   u_mem (
         .clk                    (clk),
         .rst_n                  (rst_n),
-        
+
         .aw_ch                  (aw_ch),
         .w_ch                   (w_ch),
         .b_ch                   (b_ch),

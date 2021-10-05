@@ -90,6 +90,7 @@ module DMAC_TOP_TB ();
     task test_dma(input int src, input int dst, input int len);
         int data;
         int word;
+        realtime elapsed_time;
 
         $display("---------------------------------------------------");
         $display("Load data to memory");
@@ -134,6 +135,7 @@ module DMAC_TOP_TB ();
         $display("DMA start");
         $display("---------------------------------------------------");
         apb_if.write(`START_ADDR, 32'h1);
+        elapsed_time = $realtime;
 
         $display("---------------------------------------------------");
         $display("Wait for a DMA completion");
@@ -142,10 +144,11 @@ module DMAC_TOP_TB ();
         while (data!=1) begin
             apb_if.read(`STAT_ADDR, data);
             repeat (100) @(posedge clk);
-            $write(".");
         end
-        $display("");
         @(posedge clk);
+        elapsed_time = $realtime - elapsed_time;
+        $timeformat(-9, 0, " ns", 10);
+        $display("Elapsed time for DMA: %t", elapsed_time);
 
         $display("---------------------------------------------------");
         $display("DMA completed");
@@ -175,11 +178,41 @@ module DMAC_TOP_TB ();
     initial begin
         test_init();
 
+        $display("===================================================");
+        $display("================== First trial ====================");
+        $display("===================================================");
         src = 'h0000_1000;
         dst = 'h0000_2000;
         len = 'h0100;
         test_dma(src, dst, len);
-
+        $display("===================================================");
+        $display("================= Second trial ====================");
+        $display("===================================================");
+        src = 'h1234_1234;
+        dst = 'hABCD_ABCD;
+        len = 'hFF00;
+        test_dma(src, dst, len);
+        $display("===================================================");
+        $display("================== Third trial ====================");
+        $display("===================================================");
+        src = 'hDEFE_C8ED;
+        dst = 'h1234_1234;
+        len = 'h0040;
+        test_dma(src, dst, len);
+        $display("===================================================");
+        $display("================= Fourth trial ====================");
+        $display("===================================================");
+        src = 'h0101_0101;
+        dst = 'h1010_1010;
+        len = 'h2480;
+        test_dma(src, dst, len);
+        $display("===================================================");
+        $display("================== Fifth trial ====================");
+        $display("===================================================");
+        src = 'h0000_2000;
+        dst = 'h0000_4000;
+        len = 'h0200;
+        test_dma(src, dst, len);
         $finish;
     end
 
