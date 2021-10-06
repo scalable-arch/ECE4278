@@ -197,8 +197,8 @@ module DMAC_TOP_TB ();
         test_dma(src, dst, len);
 
         for (int i=1; i<20; i=i+1) begin
-            src = 'h1010_1010;
-            dst = 'h2020_2020;
+            src = 'h0001_0000 + i*'h1000;
+            dst = 'h0002_0000 + i*'h1000;
             len = i*4;
             $display("===================================================");
             $display("================= %2dth trial =====================", i+2);

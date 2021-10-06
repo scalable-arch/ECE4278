@@ -67,8 +67,8 @@ module DMAC_ENGINE
 
     reg     [31:0]              src_addr,   src_addr_n;
     reg     [31:0]              dst_addr,   dst_addr_n;
-    reg     [3:0]               len,        len_n;
     reg     [15:0]              cnt,        cnt_n;
+    reg     [3:0]               wcnt,       wcnt_n;
 
     reg                         arvalid,
                                 rready,
@@ -77,7 +77,8 @@ module DMAC_ENGINE
                                 wlast,
                                 done;
 
-    wire                        fifo_empty;
+    wire                        fifo_full,
+                                fifo_empty;
     reg                         fifo_wren,
                                 fifo_rden;
     wire    [31:0]              fifo_rdata;
@@ -90,16 +91,18 @@ module DMAC_ENGINE
 
             src_addr            <= 32'd0;
             dst_addr            <= 32'd0;
-            len                 <= 4'd0;
             cnt                 <= 16'd0;
+
+            wcnt                <= 4'd0;
         end
         else begin
             state               <= state_n;
 
             src_addr            <= src_addr_n;
             dst_addr            <= dst_addr_n;
-            len                 <= len_n;
             cnt                 <= cnt_n;
+
+            wcnt                <= wcnt_n;
         end
 
 
@@ -110,8 +113,8 @@ module DMAC_ENGINE
 
         src_addr_n              = src_addr;
         dst_addr_n              = dst_addr;
-        len_n                   = len;
         cnt_n                   = cnt;
+        wcnt_n                  = wcnt;
 
         arvalid                 = 1'b0;
         rready                  = 1'b0;
@@ -130,11 +133,6 @@ module DMAC_ENGINE
                     src_addr_n              = src_addr_i;
                     dst_addr_n              = dst_addr_i;
                     cnt_n                   = byte_len_i;
-                    // Use a shorter burst in the first AXI transaction
-                    // For example, if byte_len==31, the first transaction
-                    // will have burst length of 15 and the second 
-                    // transaction will have burst length of 16
-                    len_n                   = byte_len_i[5:2]-'d1;
 
                     state_n                 = S_RREQ;
                 end
@@ -144,7 +142,7 @@ module DMAC_ENGINE
 
                 if (arready_i) begin
                     state_n                 = S_RDATA;
-                    src_addr_n              = src_addr + ((len+'d1)<<2);
+                    src_addr_n              = src_addr + 'd64;
                 end
             end
             S_RDATA: begin
@@ -162,29 +160,33 @@ module DMAC_ENGINE
 
                 if (awready_i) begin
                     state_n                 = S_WDATA;
-                    dst_addr_n              = dst_addr + ((len+'d1)<<2);
-                    cnt_n                   = cnt - ((len+'d1)<<2);
+                    dst_addr_n              = dst_addr + 'd64;
+                    wcnt_n                  = awlen_o;
+                    if (cnt>='h64) begin
+                        cnt_n                   = cnt - 'd64;
+                    end
+                    else begin
+                        cnt_n                   = 'd0;
+                    end
                 end
             end
             S_WDATA: begin
                 wvalid                  = 1'b1;
-                wlast                   = (len=='d0);
+                wlast                   = (wcnt==4'd0);
 
                 if (wready_i) begin
                     fifo_rden               = 1'b1;
 
-                    // update len register to generate wlast
-                    if (len!='d0) begin
-                        len_n                   = len - 4'd1;
-                    end
-                    else begin
+                    if (wlast) begin
                         if (cnt==16'd0) begin
                             state_n                 = S_IDLE;
                         end
                         else begin
-                            len_n                   = 'hF;
                             state_n                 = S_RREQ;
                         end
+                    end
+                    else begin
+                        wcnt_n                  = wcnt - 4'd1;
                     end
                 end
             end
@@ -196,7 +198,7 @@ module DMAC_ENGINE
         .clk                        (clk),
         .rst_n                      (rst_n),
 
-        .full_o                     (/* FLOATING */),
+        .full_o                     (fifo_full),
         .wren_i                     (fifo_wren),
         .wdata_i                    (rdata_i),
 
@@ -210,7 +212,7 @@ module DMAC_ENGINE
 
     assign  awid_o                  = 4'd0;
     assign  awaddr_o                = dst_addr;
-    assign  awlen_o                 = len;
+    assign  awlen_o                 = (cnt >= 'h64) ? 4'hF: cnt[5:2]-4'h1;
     assign  awsize_o                = 3'b010;   // 4 bytes per transfer
     assign  awburst_o               = 2'b01;    // incremental
     assign  awvalid_o               = awvalid;
@@ -226,11 +228,11 @@ module DMAC_ENGINE
     assign  arvalid_o               = arvalid;
     assign  araddr_o                = src_addr;
     assign  arid_o                  = 4'd0;
-    assign  arlen_o                 = len;
+    assign  arlen_o                 = (cnt >= 'h64) ? 4'hF: cnt[5:2]-4'h1;
     assign  arsize_o                = 3'b010;   // 4 bytes per transfer
     assign  arburst_o               = 2'b01;    // incremental
     assign  arvalid_o               = arvalid;
 
-    assign  rready_o                = rready;
+    assign  rready_o                = rready & !fifo_full;
 
 endmodule
