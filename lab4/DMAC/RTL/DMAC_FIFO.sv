@@ -17,25 +17,14 @@ module DMAC_FIFO #(
 
     localparam  FIFO_DEPTH              = (1<<DEPTH_LG2);
 
-    reg     [DATA_WIDTH-1:0]            mem[FIFO_DEPTH];
+    reg     [DATA_WIDTH-1:0]            data[FIFO_DEPTH];
 
     reg                                 full,       full_n,
                                         empty,      empty_n;
     reg     [DEPTH_LG2:0]               wrptr,      wrptr_n,
                                         rdptr,      rdptr_n;
 
-    always_ff @(posedge clk)
-        if (!rst_n) begin
-            for (int i=0; i<FIFO_DEPTH; i++) begin
-                mem[i]                      <= {DATA_WIDTH{1'b0}};
-            end
-        end
-        else begin
-            if (wren_i) begin
-                mem[wrptr[DEPTH_LG2-1:0]]   <= wdata_i;
-            end
-        end
-
+    // reset entries to all 0s
     always_ff @(posedge clk)
         if (!rst_n) begin
             full                        <= 1'b0;
@@ -43,6 +32,10 @@ module DMAC_FIFO #(
 
             wrptr                       <= {(DEPTH_LG2+1){1'b0}};
             rdptr                       <= {(DEPTH_LG2+1){1'b0}};
+
+            for (int i=0; i<FIFO_DEPTH; i++) begin
+                data[i]                     <= {DATA_WIDTH{1'b0}};
+            end
         end
         else begin
             full                        <= full_n;
@@ -50,6 +43,10 @@ module DMAC_FIFO #(
 
             wrptr                       <= wrptr_n;
             rdptr                       <= rdptr_n;
+
+            if (wren_i) begin
+                data[wrptr[DEPTH_LG2-1:0]]  <= wdata_i;
+            end
         end
 
     always_comb begin
@@ -90,6 +87,6 @@ module DMAC_FIFO #(
 
     assign  full_o                      = full;
     assign  empty_o                     = empty;
-    assign  rdata_o                     = mem[rdptr[DEPTH_LG2-1:0]];
+    assign  rdata_o                     = data[rdptr[DEPTH_LG2-1:0]];
 
 endmodule
