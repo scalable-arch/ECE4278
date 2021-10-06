@@ -105,8 +105,7 @@ module DMAC_ENGINE
 
     // this block programs output values and next register values
     // based on states.
-    always_comb
-    begin
+    always_comb begin
         state_n                 = state;
 
         src_addr_n              = src_addr;
@@ -130,13 +129,12 @@ module DMAC_ENGINE
                 if (start_i & byte_len_i!=16'd0) begin
                     src_addr_n              = src_addr_i;
                     dst_addr_n              = dst_addr_i;
-                    if (byte_len_i[15:2]>'d15) begin
-                        len_n                   = 'hF;
-                    end
-                    else begin
-                        len_n                   = byte_len_i[5:2]-'d1;
-                    end
                     cnt_n                   = byte_len_i;
+                    // Use a shorter burst in the first AXI transaction
+                    // For example, if byte_len==31, the first transaction
+                    // will have burst length of 15 and the second 
+                    // transaction will have burst length of 16
+                    len_n                   = byte_len_i[5:2]-'d1;
 
                     state_n                 = S_RREQ;
                 end
@@ -146,7 +144,7 @@ module DMAC_ENGINE
 
                 if (arready_i) begin
                     state_n                 = S_RDATA;
-                    src_addr_n              = src_addr + 'd64;
+                    src_addr_n              = src_addr + ((len+'d1)<<2);
                 end
             end
             S_RDATA: begin
@@ -164,8 +162,8 @@ module DMAC_ENGINE
 
                 if (awready_i) begin
                     state_n                 = S_WDATA;
-                    dst_addr_n              = dst_addr + 'd64;
-                    cnt_n                   = cnt - 16'd64;
+                    dst_addr_n              = dst_addr + ((len+'d1)<<2);
+                    cnt_n                   = cnt - ((len+'d1)<<2);
                 end
             end
             S_WDATA: begin
@@ -184,12 +182,7 @@ module DMAC_ENGINE
                             state_n                 = S_IDLE;
                         end
                         else begin
-                            if (cnt[15:2]>'d15) begin
-                                len_n                   = 'hF;
-                            end
-                            else begin
-                                len_n                   = byte_len_i[5:2]-'d1;
-                            end
+                            len_n                   = 'hF;
                             state_n                 = S_RREQ;
                         end
                     end
