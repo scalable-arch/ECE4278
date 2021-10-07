@@ -162,7 +162,7 @@ module DMAC_ENGINE
                     state_n                 = S_WDATA;
                     dst_addr_n              = dst_addr + 'd64;
                     wcnt_n                  = awlen_o;
-                    if (cnt>='h64) begin
+                    if (cnt>='d64) begin
                         cnt_n                   = cnt - 'd64;
                     end
                     else begin
@@ -212,7 +212,7 @@ module DMAC_ENGINE
 
     assign  awid_o                  = 4'd0;
     assign  awaddr_o                = dst_addr;
-    assign  awlen_o                 = (cnt >= 'h64) ? 4'hF: cnt[5:2]-4'h1;
+    assign  awlen_o                 = (cnt >= 'd64) ? 4'hF: cnt[5:2]-4'h1;
     assign  awsize_o                = 3'b010;   // 4 bytes per transfer
     assign  awburst_o               = 2'b01;    // incremental
     assign  awvalid_o               = awvalid;
@@ -228,7 +228,7 @@ module DMAC_ENGINE
     assign  arvalid_o               = arvalid;
     assign  araddr_o                = src_addr;
     assign  arid_o                  = 4'd0;
-    assign  arlen_o                 = (cnt >= 'h64) ? 4'hF: cnt[5:2]-4'h1;
+    assign  arlen_o                 = (cnt >= 'd64) ? 4'hF: cnt[5:2]-4'h1;
     assign  arsize_o                = 3'b010;   // 4 bytes per transfer
     assign  arburst_o               = 2'b01;    // incremental
     assign  arvalid_o               = arvalid;
