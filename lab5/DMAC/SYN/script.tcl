@@ -42,7 +42,6 @@ set clk_period [expr 1000 / double($clk_freq)]
 create_clock -period $clk_period $clk_name
 set clk_uncertainty [expr $clk_period * 0.35]
 set_clock_uncertainty -setup $clk_uncertainty $clk_name
-set_clock_uncertainty -hold  $clk_uncertainty $clk_name
 
 # Set infinite drive strength
 set_drive 0 $clk_name
