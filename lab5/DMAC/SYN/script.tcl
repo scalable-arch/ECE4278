@@ -52,8 +52,8 @@ set_ideal_network rst_n
 # Input/Output
 # ---------------------------------------
 # Apply default timing constraints for modules
-set_input_delay  2.0 [all_inputs]  -clock $clk_name
-set_output_delay 2.0 [all_outputs] -clock $clk_name
+set_input_delay  1.3 [all_inputs]  -clock $clk_name
+set_output_delay 1.3 [all_outputs] -clock $clk_name
 
 # ---------------------------------------
 # Area
