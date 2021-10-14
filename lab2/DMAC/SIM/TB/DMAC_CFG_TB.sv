@@ -3,6 +3,8 @@
 `define     LEN_ADDR    32'h108
 `define     STAT_ADDR   32'h110
 `define     START_ADDR  32'h10c
+
+`define 	TIMEOUT_CYCLE 	99999999
 module DMAC_CFG_TB ();
 
     reg                     clk;
@@ -28,6 +30,11 @@ module DMAC_CFG_TB ();
         $dumpvars(0, u_DUT);
         $dumpfile("dump.vcd");
     end
+	// timeout
+	initial begin
+		#`TIMEOUT_CYCLE $display("Timeout!");
+		$finish;
+	end
 
     APB                         apb_if  (.clk(clk));
 
