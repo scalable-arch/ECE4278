@@ -1,3 +1,10 @@
+`define     SRC_ADDR    32'h100
+`define     DST_ADDR    32'h104
+`define     LEN_ADDR    32'h108
+`define     STAT_ADDR   32'h110
+`define     START_ADDR  32'h10c
+
+`define 	TIMEOUT_CYCLE 	99999999
 module DMAC_CFG_TB ();
 
     reg                     clk;
@@ -23,9 +30,15 @@ module DMAC_CFG_TB ();
         $dumpvars(0, u_DUT);
         $dumpfile("dump.vcd");
     end
+	// timeout
+	initial begin
+		#`TIMEOUT_CYCLE $display("Timeout!");
+		$finish;
+	end
 
     APB                         apb_if  (.clk(clk));
 
+    reg     [31:0]              test_vector;
     initial begin
         int data;
         apb_if.init();
@@ -41,7 +54,7 @@ module DMAC_CFG_TB ();
         $display("---------------------------------------------------");
         $display("Reset value test");
         $display("---------------------------------------------------");
-        apb_if.read(32'h100, data);
+        apb_if.read(`SRC_ADDR, data);
         if (data===0)
             $display("DMA_SRC(pass): %x", data);
         else begin
@@ -49,7 +62,7 @@ module DMAC_CFG_TB ();
             @(posedge clk);
             $finish;
         end
-        apb_if.read(32'h104, data);
+        apb_if.read(`DST_ADDR, data);
         if (data===0)
             $display("DMA_DST(pass): %x", data);
         else begin
@@ -57,7 +70,7 @@ module DMAC_CFG_TB ();
             @(posedge clk);
             $finish;
         end
-        apb_if.read(32'h108, data);
+        apb_if.read(`LEN_ADDR, data);
         if (data===0)
             $display("DMA_LEN(pass): %x", data);
         else begin
@@ -65,7 +78,7 @@ module DMAC_CFG_TB ();
             @(posedge clk);
             $finish;
         end
-        apb_if.read(32'h110, data);
+        apb_if.read(`STAT_ADDR, data);
         if (data===1)
             $display("DMA_STATUS(pass): %x", data);
         else begin
@@ -77,27 +90,31 @@ module DMAC_CFG_TB ();
         $display("---------------------------------------------------");
         $display("Configuration test");
         $display("---------------------------------------------------");
-        apb_if.write(32'h100, 32'h1000);
-        apb_if.read(32'h100, data);
-        if (data===32'h1000)
+        test_vector = 32'h1000;
+        $display("First Round");
+        apb_if.write(`SRC_ADDR, test_vector);
+        apb_if.read(`SRC_ADDR, data);
+        if (data===test_vector)
             $display("DMA_SRC(pass): %x", data);
         else begin
             $display("DMA_SRC(fail): %x", data);
             @(posedge clk);
             $finish;
         end
-        apb_if.write(32'h104, 32'h2000);
-        apb_if.read(32'h104, data);
-        if (data===32'h2000)
+        test_vector = 32'h2000;
+        apb_if.write(`DST_ADDR, test_vector);
+        apb_if.read(`DST_ADDR, data);
+        if (data===test_vector)
             $display("DMA_DST(pass): %x", data);
         else begin
             $display("DMA_DST(fail): %x", data);
             @(posedge clk);
             $finish;
         end
-        apb_if.write(32'h108, 32'h100);
-        apb_if.read(32'h108, data);
-        if (data===32'h100)
+        test_vector = 32'h100;
+        apb_if.write(`LEN_ADDR, test_vector);
+        apb_if.read(`LEN_ADDR, data);
+        if (data===test_vector)
             $display("DMA_LEN(pass): %x", data);
         else begin
             $display("DMA_LEN(fail): %x", data);
@@ -105,17 +122,81 @@ module DMAC_CFG_TB ();
             $finish;
         end
 
+        test_vector = 32'h0123_4567;
+        $display("Second Round");
+        apb_if.write(`SRC_ADDR, test_vector);
+        apb_if.read(`SRC_ADDR, data);
+        if (data===test_vector)
+            $display("DMA_SRC(pass): %x", data);
+        else begin
+            $display("DMA_SRC(fail): %x", data);
+            @(posedge clk);
+            $finish;
+        end
+        test_vector = 32'h89AB_CDEF;
+        apb_if.write(`DST_ADDR, test_vector);
+        apb_if.read(`DST_ADDR, data);
+        if (data===test_vector)
+            $display("DMA_DST(pass): %x", data);
+        else begin
+            $display("DMA_DST(fail): %x", data);
+            @(posedge clk);
+            $finish;
+        end
+        test_vector = 32'h1234;
+        apb_if.write(`LEN_ADDR, test_vector);
+        apb_if.read(`LEN_ADDR, data);
+        if (data===test_vector)
+            $display("DMA_LEN(pass): %x", data);
+        else begin
+            $display("DMA_LEN(fail): %x", data);
+            @(posedge clk);
+            $finish;
+        end
+
+        test_vector = 32'h1111_AAAA;
+        $display("Third Round");
+        apb_if.write(`SRC_ADDR, test_vector);
+        apb_if.read(`SRC_ADDR, data);
+        if (data===test_vector)
+            $display("DMA_SRC(pass): %x", data);
+        else begin
+            $display("DMA_SRC(fail): %x", data);
+            @(posedge clk);
+            $finish;
+        end
+        test_vector = 32'h2222_BBBB;
+        apb_if.write(`DST_ADDR, test_vector);
+        apb_if.read(`DST_ADDR, data);
+        if (data===test_vector)
+            $display("DMA_DST(pass): %x", data);
+        else begin
+            $display("DMA_DST(fail): %x", data);
+            @(posedge clk);
+            $finish;
+        end
+        test_vector = 32'hFFFF;
+        apb_if.write(`LEN_ADDR, test_vector);
+        apb_if.read(`LEN_ADDR, data);
+        if (data===test_vector)
+            $display("DMA_LEN(pass): %x", data);
+        else begin
+            $display("DMA_LEN(fail): %x", data);
+            @(posedge clk);
+            $finish;
+        end
         $display("---------------------------------------------------");
         $display("DMA start");
         $display("---------------------------------------------------");
-        apb_if.write(32'h10c, 32'h1);
+        test_vector = 32'h1;
+        apb_if.write(`START_ADDR, test_vector);
 
         $display("---------------------------------------------------");
         $display("Wait for a DMA completion");
         $display("---------------------------------------------------");
         data = 0;
-        while (data!==1) begin
-            apb_if.read(32'h110, data);
+        while (data != 1) begin
+            apb_if.read(`STAT_ADDR, data);
             repeat (100) @(posedge clk);
             $write(".");
         end
