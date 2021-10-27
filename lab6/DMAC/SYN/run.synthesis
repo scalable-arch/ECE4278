@@ -2,10 +2,27 @@
 
 source ../../../scripts/common.sh
 
+function print_help() {
+    echo "Usage: ./run.synthesis design_name"
+    echo "  design_name options:"
+    echo "    top   : DMAC_TOP"
+    echo "    fifo  : DMAC_FIFO"
+
+    exit 1
+}
+
 export LAB_PATH="$PWD/../"
 export LIBLIST_PATH="$LAB_PATH/SYN/lib_container.tcl"
 export FILELIST_RTL="$LAB_PATH/RTL/filelist.f"
-SCRIPT_PATH="$LAB_PATH/SYN/script.tcl"
+if [[ $1 == "top" ]]; then
+    echo "Selected DMAC_TOP"
+    SCRIPT_PATH="$LAB_PATH/SYN/script.tcl"
+elif [[ $1 == "fifo" ]]; then
+    echo "Selected DMAC_FIFO"
+    SCRIPT_PATH="$LAB_PATH/SYN/script_fifo.tcl"
+else
+    print_help
+fi
 
 echo "Cleaning up the old directory"
 rm -rf $RUN_DIR
