@@ -38,20 +38,21 @@ set clk_name clk
 set clk_freq            200
 
 # Reduce clock period to model wire delay (60% of original period)
-set derating 0.65
 set clk_period [expr 1000 / double($clk_freq)]
-set clk_period [expr $clk_period * $derating]
-
 create_clock -period $clk_period $clk_name
+set clk_uncertainty [expr $clk_period * 0.35]
+set_clock_uncertainty -setup $clk_uncertainty $clk_name
+
 # Set infinite drive strength
 set_drive 0 $clk_name
+set_ideal_network rst_n
 
 # ---------------------------------------
 # Input/Output
 # ---------------------------------------
 # Apply default timing constraints for modules
-set_input_delay  2.0 [all_inputs]  -clock $clk_name
-set_output_delay 2.0 [all_outputs] -clock $clk_name
+set_input_delay  1.3 [all_inputs]  -clock $clk_name
+set_output_delay 1.3 [all_outputs] -clock $clk_name
 
 # ---------------------------------------
 # Area
@@ -90,21 +91,5 @@ write -hierarchy -format verilog -output  $design_name.netlist.v
 write -hierarchy -format ddc     -output  $design_name.ddc
 write_sdf -version 1.0                    $design_name.sdf
 write_sdc                                 $design_name.sdc
-
-# ---------------------------------------
-# Step 8: Save the design database
-# ---------------------------------------
-set_scan_configuration -chain_count 5
-create_test_protocol -infer_clock -infer_asynch
-
-preview_dft
-
-dft_drc
-
-insert_dft
-
-write -hierarchy -format verilog -output  $design_name.scan.netlist.v
-write_test_protocol              -output  $design_name.scan.stil
-write_sdc                                 $design_name.scan.sdc
 
 exit

@@ -97,6 +97,7 @@ module DMAC_TOP_TB ();
     task test_dma(input int src, input int dst, input int len);
         int data;
         int word;
+        realtime elapsed_time;
 
         $display("---------------------------------------------------");
         $display("Load data to memory");
@@ -141,6 +142,7 @@ module DMAC_TOP_TB ();
         $display("DMA start");
         $display("---------------------------------------------------");
         apb_if.write(`START_ADDR, 32'h1);
+        elapsed_time = $realtime;
 
         $display("---------------------------------------------------");
         $display("Wait for a DMA completion");
@@ -149,10 +151,11 @@ module DMAC_TOP_TB ();
         while (data!=1) begin
             apb_if.read(`STAT_ADDR, data);
             repeat (100) @(posedge clk);
-            $write(".");
         end
-        $display("");
         @(posedge clk);
+        elapsed_time = $realtime - elapsed_time;
+        $timeformat(-9, 0, " ns", 10);
+        $display("Elapsed time for DMA: %t", elapsed_time);
 
         $display("---------------------------------------------------");
         $display("DMA completed");
@@ -185,8 +188,31 @@ module DMAC_TOP_TB ();
         src = 'h0000_1000;
         dst = 'h0000_2000;
         len = 'h0100;
+        $display("===================================================");
+        $display("= 1st trial"); 
+        $display("= Copying %x bytes from %x to %x", len, src, dst);
+        $display("===================================================");
         test_dma(src, dst, len);
 
+        src = 'h1234_1234;
+        dst = 'hABCD_ABCC;
+        len = 'h0F00;
+        $display("===================================================");
+        $display("= 2nd trial (long transfer)");
+        $display("= Copying %x bytes from %x to %x", len, src, dst);
+        $display("===================================================");
+        test_dma(src, dst, len);
+
+        for (int i=1; i<20; i=i+1) begin
+            src = 'h0001_0000 + i*'h1000;
+            dst = 'h0002_0000 + i*'h1000;
+            len = i*4;
+            $display("===================================================");
+            $display("= %2dth trial", i+2);
+            $display("= Copying %x bytes from %x to %x", len, src, dst);
+            $display("===================================================");
+            test_dma(src, dst, len);
+        end
         $finish;
     end
 

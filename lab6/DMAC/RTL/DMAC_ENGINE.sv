@@ -24,7 +24,7 @@ module DMAC_ENGINE
     output  wire                awvalid_o,
     input   wire                awready_i,
 
-    // AMBA AXI interface (AW channel)
+    // AMBA AXI interface (W channel)
     output  wire    [3:0]       wid_o,
     output  wire    [31:0]      wdata_o,
     output  wire    [3:0]       wstrb_o,
@@ -67,8 +67,8 @@ module DMAC_ENGINE
 
     reg     [31:0]              src_addr,   src_addr_n;
     reg     [31:0]              dst_addr,   dst_addr_n;
-    reg     [3:0]               len,        len_n;
     reg     [15:0]              cnt,        cnt_n;
+    reg     [3:0]               wcnt,       wcnt_n;
 
     reg                         arvalid,
                                 rready,
@@ -77,7 +77,8 @@ module DMAC_ENGINE
                                 wlast,
                                 done;
 
-    wire                        fifo_empty;
+    wire                        fifo_full,
+                                fifo_empty;
     reg                         fifo_wren,
                                 fifo_rden;
     wire    [31:0]              fifo_rdata;
@@ -90,29 +91,30 @@ module DMAC_ENGINE
 
             src_addr            <= 32'd0;
             dst_addr            <= 32'd0;
-            len                 <= 4'd0;
             cnt                 <= 16'd0;
+
+            wcnt                <= 4'd0;
         end
         else begin
             state               <= state_n;
 
             src_addr            <= src_addr_n;
             dst_addr            <= dst_addr_n;
-            len                 <= len_n;
             cnt                 <= cnt_n;
+
+            wcnt                <= wcnt_n;
         end
 
 
     // this block programs output values and next register values
     // based on states.
-    always_comb
-    begin
+    always_comb begin
         state_n                 = state;
 
         src_addr_n              = src_addr;
         dst_addr_n              = dst_addr;
-        len_n                   = len;
         cnt_n                   = cnt;
+        wcnt_n                  = wcnt;
 
         arvalid                 = 1'b0;
         rready                  = 1'b0;
@@ -130,12 +132,6 @@ module DMAC_ENGINE
                 if (start_i & byte_len_i!=16'd0) begin
                     src_addr_n              = src_addr_i;
                     dst_addr_n              = dst_addr_i;
-                    if (byte_len_i[15:2]>'d15) begin
-                        len_n                   = 'hF;
-                    end
-                    else begin
-                        len_n                   = byte_len_i[5:2]-'d1;
-                    end
                     cnt_n                   = byte_len_i;
 
                     state_n                 = S_RREQ;
@@ -165,33 +161,32 @@ module DMAC_ENGINE
                 if (awready_i) begin
                     state_n                 = S_WDATA;
                     dst_addr_n              = dst_addr + 'd64;
-                    cnt_n                   = cnt - 16'd64;
+                    wcnt_n                  = awlen_o;
+                    if (cnt>='d64) begin
+                        cnt_n                   = cnt - 'd64;
+                    end
+                    else begin
+                        cnt_n                   = 'd0;
+                    end
                 end
             end
             S_WDATA: begin
                 wvalid                  = 1'b1;
-                wlast                   = (len=='d0);
+                wlast                   = (wcnt==4'd0);
 
                 if (wready_i) begin
                     fifo_rden               = 1'b1;
 
-                    // update len register to generate wlast
-                    if (len!='d0) begin
-                        len_n                   = len - 4'd1;
-                    end
-                    else begin
+                    if (wlast) begin
                         if (cnt==16'd0) begin
                             state_n                 = S_IDLE;
                         end
                         else begin
-                            if (cnt[15:2]>'d15) begin
-                                len_n                   = 'hF;
-                            end
-                            else begin
-                                len_n                   = byte_len_i[5:2]-'d1;
-                            end
                             state_n                 = S_RREQ;
                         end
+                    end
+                    else begin
+                        wcnt_n                  = wcnt - 4'd1;
                     end
                 end
             end
@@ -203,7 +198,7 @@ module DMAC_ENGINE
         .clk                        (clk),
         .rst_n                      (rst_n),
 
-        .full_o                     (/* FLOATING */),
+        .full_o                     (fifo_full),
         .wren_i                     (fifo_wren),
         .wdata_i                    (rdata_i),
 
@@ -217,7 +212,7 @@ module DMAC_ENGINE
 
     assign  awid_o                  = 4'd0;
     assign  awaddr_o                = dst_addr;
-    assign  awlen_o                 = len;
+    assign  awlen_o                 = (cnt >= 'd64) ? 4'hF: cnt[5:2]-4'h1;
     assign  awsize_o                = 3'b010;   // 4 bytes per transfer
     assign  awburst_o               = 2'b01;    // incremental
     assign  awvalid_o               = awvalid;
@@ -233,11 +228,11 @@ module DMAC_ENGINE
     assign  arvalid_o               = arvalid;
     assign  araddr_o                = src_addr;
     assign  arid_o                  = 4'd0;
-    assign  arlen_o                 = len;
+    assign  arlen_o                 = (cnt >= 'd64) ? 4'hF: cnt[5:2]-4'h1;
     assign  arsize_o                = 3'b010;   // 4 bytes per transfer
     assign  arburst_o               = 2'b01;    // incremental
     assign  arvalid_o               = arvalid;
 
-    assign  rready_o                = rready;
+    assign  rready_o                = rready & !fifo_full;
 
 endmodule
