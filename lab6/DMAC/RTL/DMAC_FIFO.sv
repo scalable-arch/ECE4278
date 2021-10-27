@@ -53,11 +53,11 @@ module DMAC_FIFO #(
         wrptr_n                     = wrptr;
         rdptr_n                     = rdptr;
 
-        if (wren_i) begin
+        if (wren_i & ~full) begin
             wrptr_n                     = wrptr + 'd1;
         end
 
-        if (rden_i) begin
+        if (rden_i & ~empty) begin
             rdptr_n                     = rdptr + 'd1;
         end
 
