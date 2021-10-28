@@ -25,7 +25,7 @@ else
 fi
 
 echo "Cleaning up the old directory"
-rm -rf $RUN_DIR
+#rm -rf $RUN_DIR
 echo "Creating a new directory"
 mkdir -p $RUN_DIR
 cd $RUN_DIR
