@@ -12,12 +12,14 @@ mkdir -p $RUN_DIR
 cd $RUN_DIR
 
 # Generate synthesizable SystemVerilog
-$CSR_CMD ../dmac.rdl -c ../dmac.css -o DMAC_CFG -t sv
+$CSR_CMD ../DMAC.rdl -c ../DMAC.css -o DMAC_CFG -t sv
+# Generate Microsoft HTML
+$CSR_CMD ../DMAC.rdl -c ../DMAC.css -o DMAC_CFG -t ahtml
 # Generate Microsoft Word Dcoument
-$CSR_CMD ../dmac.rdl -c ../dmac.css -o DMAC_CFG -t docx
+$CSR_CMD ../DMAC.rdl -c ../DMAC.css -o DMAC_CFG -t docx
 # Generate UVM 2020
-$CSR_CMD ../dmac.rdl -c ../dmac.css -o DMAC_CFG -t uvm_2020
+$CSR_CMD ../DMAC.rdl -c ../DMAC.css -o DMAC_CFG -t uvm_2020
 # Generate IP-XACT 2014
-$CSR_CMD ../dmac.rdl -c ../dmac.css -o DMAC_CFG -t ipxact_2014
+$CSR_CMD ../DMAC.rdl -c ../DMAC.css -o DMAC_CFG -t ipxact_2014
 # Generate Addressmap C header
-$CSR_CMD ../dmac.rdl -c ../dmac.css -o DMAC_CFG -t ah
+$CSR_CMD ../DMAC.rdl -c ../DMAC.css -o DMAC_CFG -t ah
