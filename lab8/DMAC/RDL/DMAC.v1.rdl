@@ -20,6 +20,7 @@ addrmap DMAC_CFG {
             reset = 32'h0001_0101;
         } version[31:0];	// 32b field
     } DMA_VER @0x0;		// offset = 0
+	/*
     reg {
         field {
             desc = "The start address of the source range.";
@@ -28,7 +29,6 @@ addrmap DMAC_CFG {
             reset = 32'h0000_0000;
         } start_addr[31:0];	// 32b field
     } DMA_SRC @0x100;	// offset = 0x100
-	/*
     reg {
         field {
             desc = "The start address of the destination range.";
