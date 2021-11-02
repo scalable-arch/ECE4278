@@ -11,15 +11,17 @@ echo "Creating a new directory"
 mkdir -p $RUN_DIR
 cd $RUN_DIR
 
+RDL_INPUT="../DMAC.v1.rdl"
+
 # Generate synthesizable SystemVerilog
-$CSR_CMD ../DMAC.rdl -c ../DMAC.css -o DMAC_CFG -t sv
+$CSR_CMD $RDL_INPUT -c ../DMAC.css -o DMAC_CFG -t sv
 # Generate Microsoft HTML
-$CSR_CMD ../DMAC.rdl -c ../DMAC.css -o DMAC_CFG -t ahtml
+$CSR_CMD $RDL_INPUT -c ../DMAC.css -o DMAC_CFG -t ahtml
 # Generate Microsoft Word Dcoument
-$CSR_CMD ../DMAC.rdl -c ../DMAC.css -o DMAC_CFG -t docx
+$CSR_CMD $RDL_INPUT -c ../DMAC.css -o DMAC_CFG -t docx
 # Generate UVM 2020
-$CSR_CMD ../DMAC.rdl -c ../DMAC.css -o DMAC_CFG -t uvm_2020
+$CSR_CMD $RDL_INPUT -c ../DMAC.css -o DMAC_CFG -t uvm_2020
 # Generate IP-XACT 2014
-$CSR_CMD ../DMAC.rdl -c ../DMAC.css -o DMAC_CFG -t ipxact_2014
+$CSR_CMD $RDL_INPUT -c ../DMAC.css -o DMAC_CFG -t ipxact_2014
 # Generate Addressmap C header
-$CSR_CMD ../DMAC.rdl -c ../DMAC.css -o DMAC_CFG -t ah
+$CSR_CMD $RDL_INPUT -c ../DMAC.css -o DMAC_CFG -t ah
