@@ -1,1 +1,0 @@
--sverilog $LAB_PATH/RDL/OUTPUT/DMAC_CFG.sv

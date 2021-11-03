@@ -11,7 +11,8 @@ echo "Creating a new directory"
 mkdir -p $RUN_DIR
 cd $RUN_DIR
 
-RDL_INPUT="../DMAC.v1.rdl"
+#RDL_INPUT="../DMAC.v1.rdl"
+RDL_INPUT="../DMAC.v2.rdl"
 
 # Generate synthesizable SystemVerilog
 $CSR_CMD $RDL_INPUT -c ../DMAC.css -o DMAC_CFG -t sv
