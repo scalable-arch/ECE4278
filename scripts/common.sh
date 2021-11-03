@@ -15,3 +15,5 @@ VERDI_OPTIONS=''
 
 DC_CMD='dc_shell-xg-t'
 DC_OPTIONS=''
+
+CSR_CMD='/home/ScalableArchiLab/bin/csrCompileLite'
