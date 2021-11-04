@@ -1,0 +1,32 @@
+// Copyright (c) 2021 Sungkyunkwan University
+//
+// Authors:
+// - Jungrae Kim <dale40@skku.edu>
+
+regfile channel_sfr
+{
+	// TODO:
+	// Implement this regfile to include DMA_SRC,
+    // DMA_DST, DMA_LEN, DMA_CMD, DMA_STATUS
+};
+
+addrmap DMAC_CFG {
+    name = "DMA controller address map";
+    desc = "Address map of ECE4278 DRAM controller project";
+    reg {
+        field {
+            desc = "The version of this DMA controller.
+				The upper 16 bits represent the major version.
+				The middle 8 bits represent the minor version.
+				The lowest 8 bits represent the micro version.
+			   	This document describes behaviors of major verion 2.";
+            sw = r;
+            hw = na;
+            reset = 32'h0002_0101;
+        } version[31:0];
+    } DMA_VER @0x0;
+	channel_sfr CH0 @0x100;
+	channel_sfr CH1 @0x200;
+	channel_sfr CH2 @0x300;
+	channel_sfr CH3 @0x400;
+};
