@@ -1,0 +1,6 @@
+#!/bin/bash
+
+# Preprocess only
+gcc -E main.c -o main.i
+# normal compile
+gcc    main.c -o a.out
