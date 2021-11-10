@@ -204,13 +204,15 @@ module DMAC_TOP_TB ();
     // this task must be declared automatic so that each invocation uses
     // different memories
     task automatic test_channel(input int ch, input int test_cnt);
-        int         src, dst, len;
+        int         src_offset, dst_offset, len;
+        src_offset = 0;
+        dst_offset = 0;
 
         for (int i=0; i<test_cnt; i++) begin
-            src = 'h0000_1000;
-            dst = 'h0000_2000;
             len = 'h0100;
-            test_dma(ch, src, (ch+1)*`DST_REGION_STRIDE+dst, len);
+            test_dma(ch, `SRC_REGION_START+src_offset, (ch+1)*`DST_REGION_STRIDE+dst_offset, len);
+            src_offset = src_offset + len;
+            dst_offset = dst_offset + len;
         end
     endtask
 
@@ -221,10 +223,10 @@ module DMAC_TOP_TB ();
 
         // run 4 channel tests simultaneously
         fork
-            test_channel(0, 100);
-            test_channel(1, 100);
-            test_channel(2, 100);
-            test_channel(3, 100);
+            test_channel(0, 32);
+            test_channel(1, 32);
+            test_channel(2, 32);
+            test_channel(3, 32);
         join
 
         $finish;
