@@ -57,10 +57,9 @@ module DMAC_ENGINE
                                 S_RDATA = 3'd2,
                                 S_WREQ  = 3'd3,
                                 S_WDATA = 3'd4,
-                                S_WAIT  = 3'd5;
+                                S_WAIT  = 3'd5; // new state for project 1
 
     reg     [2:0]               state,      state_n;
-    reg     [15:0]              outstanding_wr_cnt, outstanding_wr_cnt_n;
 
     reg     [31:0]              src_addr,   src_addr_n;
     reg     [31:0]              dst_addr,   dst_addr_n;
@@ -85,7 +84,6 @@ module DMAC_ENGINE
     always_ff @(posedge clk)
         if (!rst_n) begin
             state               <= S_IDLE;
-            outstanding_wr_cnt  <= 'd0;
 
             src_addr            <= 32'd0;
             dst_addr            <= 32'd0;
@@ -95,7 +93,6 @@ module DMAC_ENGINE
         end
         else begin
             state               <= state_n;
-            outstanding_wr_cnt  <= outstanding_wr_cnt_n;
 
             src_addr            <= src_addr_n;
             dst_addr            <= dst_addr_n;
@@ -178,7 +175,7 @@ module DMAC_ENGINE
 
                     if (wlast) begin
                         if (cnt==16'd0) begin
-                            state_n                 = S_WAIT;
+                            state_n                 = S_IDLE;
                         end
                         else begin
                             state_n                 = S_RREQ;
@@ -189,26 +186,11 @@ module DMAC_ENGINE
                     end
                 end
             end
-            S_WAIT: begin
-                if (outstanding_wr_cnt=='d0) begin
-                    state_n                 = S_IDLE;
-                end
-            end
+            // FIXME: implement S_WAIT state for project 1
         endcase
     end
 
-    wire    outstanding_wr_inc      = awvalid_o & awready_i;
-    wire    outstanding_wr_dec      = bvalid_i & bready_o & (bresp_i==2'd0);
-
-    always_comb
-    begin
-        outstanding_wr_cnt_n        = outstanding_wr_cnt;
-        if (outstanding_wr_inc & !outstanding_wr_dec)
-            outstanding_wr_cnt_n        = outstanding_wr_cnt + 'd1;
-        else if (!outstanding_wr_inc & outstanding_wr_dec)
-            outstanding_wr_cnt_n        = outstanding_wr_cnt - 'd1;
-    end
-
+    // FIXME: implement outstanding_wr_cnt
     DMAC_FIFO   u_fifo
     (
         .clk                        (clk),
