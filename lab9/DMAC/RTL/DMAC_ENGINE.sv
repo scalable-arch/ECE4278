@@ -238,7 +238,7 @@ module DMAC_ENGINE
 
     assign  wdata_o                 = fifo_rdata;
     assign  wstrb_o                 = 4'b1111;  // all bytes within 4 byte are valid
-    assign  wlast_o                 = 1'b1;
+    assign  wlast_o                 = wlast;
     assign  wvalid_o                = wvalid;
 
     assign  bready_o                = 1'b1;

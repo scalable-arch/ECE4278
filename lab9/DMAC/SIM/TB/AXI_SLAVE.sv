@@ -125,11 +125,6 @@ module AXI_SLAVE
                     end
                     waddr_n             = waddr + (DATA_WIDTH/8);
                     if (wlen==4'd0) begin
-                        if (w_ch.wlast!=1'b1) begin
-                            $display("WLAST mismatch");
-                            @(posedge clk);
-                            $finish;
-                        end
                         wstate_n                = S_W_RESP;
                     end
                     else begin

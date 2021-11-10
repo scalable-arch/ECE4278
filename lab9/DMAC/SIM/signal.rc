@@ -2,11 +2,11 @@ Magic 271485
 Revision Verdi_R-2020.12-SP1-1
 
 ; Window Layout <x> <y> <width> <height> <signalwidth> <valuewidth>
-viewPort 1080 174 1920 1017 165 65
+viewPort 8 31 1501 575 165 65
 
 ; File list:
 ; openDirFile [-d delimiter] [-s time_offset] [-rf auto_bus_rule_file] path_name file_name
-openDirFile -d / "" "/home/ScalableArchiLab/ECE4278_devel/lab9/DMAC/SIM/OUTPUT/inter.fsdb"
+openDirFile -d / -i 0 "" "/home/ScalableArchiLab/ECE4278_devel/lab9/DMAC/SIM/OUTPUT/inter.fsdb"
 
 ; file time scale:
 ; fileTimeScale ### s|ms|us|ns|ps
@@ -16,16 +16,14 @@ signalSpacing 5
 
 ; windowTimeUnit is used for zoom, cursor & marker
 ; waveform viewport range
-zoom 0.000000 97237821377.191971
-cursor 0.000000
+zoom 0.000000 2416778500.000000
+cursor 2350000.000000
 marker 0.000000
 
-; user define markers
-; userMarker time_pos marker_name color linestyle
 ; visible top row signal index
 top 0
 ; marker line index
-markerPos 47
+markerPos 51
 
 ; event list
 ; addEvent event_name event_expression
@@ -93,8 +91,12 @@ addSignal -h 15 /DMAC_TOP_TB/u_DUT/rlast_i
 addSignal -h 15 /DMAC_TOP_TB/u_DUT/rvalid_i
 addSignal -h 15 /DMAC_TOP_TB/u_DUT/rready_o
 addGroup "G8"
-addSignal -h 15 -UNSIGNED -HEX /DMAC_TOP_TB/u_DUT/genblk1[0]/u_engine/state[2:0]
 addGroup "G9"
+addSignal -h 15 -UNSIGNED -HEX /DMAC_TOP_TB/u_DUT/channel[0]/u_engine/state[2:0]
+addSignal -h 15 -UNSIGNED -HEX /DMAC_TOP_TB/u_DUT/channel[1]/u_engine/state[2:0]
+addSignal -h 15 -UNSIGNED -HEX /DMAC_TOP_TB/u_DUT/channel[2]/u_engine/state[2:0]
+addSignal -h 15 -UNSIGNED -HEX /DMAC_TOP_TB/u_DUT/channel[3]/u_engine/state[2:0]
+addGroup "G10"
 
 ; getSignalForm Scope Hierarchy Status
 ; active file of getSignalForm

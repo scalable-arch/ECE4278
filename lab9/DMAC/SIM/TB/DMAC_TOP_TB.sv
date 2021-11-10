@@ -9,8 +9,8 @@
 `define 	TIMEOUT_DELAY 	99999999
 
 `define     SRC_REGION_START    32'h0000_0000
-`define     SRC_REGION_SIZE     32'h0000_1000
-`define     DST_REGION_STRIDE   32'h0001_0000
+`define     SRC_REGION_SIZE     32'h0000_2000
+`define     DST_REGION_STRIDE   32'h0000_2000
 
 module DMAC_TOP_TB ();
 
