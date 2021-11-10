@@ -204,6 +204,7 @@ module DMAC_ENGINE
 
     wire    outstanding_wr_inc      = awvalid_o & awready_i;
     wire    outstanding_wr_dec      = bvalid_i & bready_o & (bresp_i==2'd0);
+
     always_comb
     begin
         outstanding_wr_cnt_n        = outstanding_wr_cnt;

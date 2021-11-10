@@ -221,13 +221,7 @@ module DMAC_TOP_TB ();
     initial begin
         test_init();
 
-        // run 4 channel tests simultaneously
-        fork
-            test_channel(0, 32);
-            test_channel(1, 32);
-            test_channel(2, 32);
-            test_channel(3, 32);
-        join
+        test_channel(0, 32);
 
         $finish;
     end
