@@ -80,9 +80,6 @@ module DMAC_TOP
     wire                        wlast_vec[N_CH];
     wire                        wvalid_vec[N_CH];
     wire                        wready_vec[N_CH];
-    wire    [3:0]               bid_vec[N_CH];
-    wire    [1:0]               bresp_vec[N_CH];
-    wire                        bvalid_vec[N_CH];
     wire                        bready_vec[N_CH];
     wire    [3:0]               arid_vec[N_CH];
     wire    [31:0]              araddr_vec[N_CH];
@@ -91,11 +88,6 @@ module DMAC_TOP
     wire    [1:0]               arburst_vec[N_CH];
     wire                        arvalid_vec[N_CH];
     wire                        arready_vec[N_CH];
-    wire    [3:0]               rid_vec[N_CH];
-    wire    [31:0]              rdata_vec[N_CH];
-    wire    [1:0]               rresp_vec[N_CH];
-    wire                        rlast_vec[N_CH];
-    wire                        rvalid_vec[N_CH];
     wire                        rready_vec[N_CH];
 
     DMAC_CFG u_cfg(
@@ -210,16 +202,6 @@ module DMAC_TOP
         .dst_ready_i            (wready_i)
     );
 
-    genvar ch;
-    generate
-        for (ch=0; ch<N_CH; ch++) begin
-            assign  awid_vec[ch]        = ch;
-            assign  wid_vec[ch]         = ch;
-            assign  arid_vec[ch]        = ch;
-            assign  bvalid_vec[ch]      = bvalid_i & (bid_i==ch);
-            assign  rvalid_vec[ch]      = rvalid_i & (rid_i==ch);
-        end
-    endgenerate
     assign  bready_o                = (bid_i=='d0) ? bready_vec[0] :
                                       (bid_i=='d1) ? bready_vec[1] :
                                       (bid_i=='d2) ? bready_vec[2] :
@@ -230,8 +212,9 @@ module DMAC_TOP
                                       (rid_i=='d2) ? rready_vec[2] :
                                                      rready_vec[3];
 
+    genvar ch;
     generate
-        for (ch=0; ch<N_CH; ch++) begin
+        for (ch=0; ch<N_CH; ch++) begin: channel
             DMAC_ENGINE u_engine(
                 .clk                    (clk),
                 .rst_n                  (rst_n),
@@ -260,7 +243,7 @@ module DMAC_TOP
         
                 // AMBA AXI interface (B channel)
                 .bresp_i                (bresp_i),
-                .bvalid_i               (bvalid_vec[ch]),
+                .bvalid_i               (bvalid_i & (bid_i==ch)),
                 .bready_o               (bready_vec[ch]),
         
                 // AMBA AXI interface (AR channel)
@@ -275,9 +258,13 @@ module DMAC_TOP
                 .rdata_i                (rdata_i),
                 .rresp_i                (rresp_i),
                 .rlast_i                (rlast_i),
-                .rvalid_i               (rvalid_vec[ch]),
+                .rvalid_i               (rvalid_i & (rid_i==ch)),
                 .rready_o               (rready_vec[ch])
             );
+
+            assign  awid_vec[ch]        = ch;
+            assign  wid_vec[ch]         = ch;
+            assign  arid_vec[ch]        = ch;
         end
     endgenerate
 

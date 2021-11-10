@@ -5,7 +5,7 @@ source ../../../scripts/common.sh
 export LD_LIBRARY_PATH="/opt/glibc-2.14/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 export LM_LICENSE_FILE="/home/ScalableArchiLab/RDL/license.lic:/home/ScalableArchiLab/RDL/license1.lic:$LM_LICENSE_FILE"
 
-RDL_INPUT=DMAC.rdl
+RDL_INPUT=../DMAC.rdl
 
 echo "Cleaning up the old directory"
 rm -rf $RUN_DIR

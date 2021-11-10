@@ -1,13 +1,22 @@
 `define     IP_VER      32'h000
-`define     SRC_ADDR    32'h100
-`define     DST_ADDR    32'h104
-`define     LEN_ADDR    32'h108
-`define     STAT_ADDR   32'h110
-`define     START_ADDR  32'h10c
+`define     CH_SFR_SIZE 32'h100
+`define     SRC_OFFSET  32'h0
+`define     DST_OFFSET  32'h4
+`define     LEN_OFFSET  32'h8
+`define     CMD_OFFSET  32'hc
+`define     STAT_OFFSET 32'h10
 
-`define 	TIMEOUT_CYCLE 	99999999
+`define 	TIMEOUT_DELAY 	99999999
+
+`define     SRC_REGION_START    32'h0000_0000
+`define     SRC_REGION_SIZE     32'h0000_1000
+`define     DST_REGION_STRIDE   32'h0001_0000
+
 module DMAC_TOP_TB ();
 
+    //----------------------------------------------------------
+    // clock and reset generation
+    //----------------------------------------------------------
     reg                     clk;
     reg                     rst_n;
 
@@ -26,17 +35,21 @@ module DMAC_TOP_TB ();
         rst_n                   = 1'b1;     // release the reset
     end
 
+	// timeout
+	initial begin
+		#`TIMEOUT_DELAY $display("Timeout!");
+		$finish;
+	end
+
     // enable waveform dump
     initial begin
         $dumpvars(0, u_DUT);
         $dumpfile("dump.vcd");
     end
-	// timeout
-	initial begin
-		#`TIMEOUT_CYCLE $display("Timeout!");
-		$finish;
-	end
 
+    //----------------------------------------------------------
+    // Connection between DUT and test modules
+    //----------------------------------------------------------
     APB                         apb_if  (.clk(clk));
 
     AXI_AW_CH                   aw_ch   (.clk(clk));
@@ -44,163 +57,6 @@ module DMAC_TOP_TB ();
     AXI_B_CH                    b_ch    (.clk(clk));
     AXI_AR_CH                   ar_ch   (.clk(clk));
     AXI_R_CH                    r_ch    (.clk(clk));
-
-    task test_init();
-        int data;
-        apb_if.init();
-
-        @(posedge rst_n);                   // wait for a release of the reset
-        repeat (10) @(posedge clk);         // wait another 10 cycles
-
-        apb_if.read(`IP_VER, data);
-        $display("---------------------------------------------------");
-        $display("IP version: %x", data);
-        $display("---------------------------------------------------");
-
-        $display("---------------------------------------------------");
-        $display("Reset value test");
-        $display("---------------------------------------------------");
-        apb_if.read(`SRC_ADDR, data);
-        if (data===0)
-            $display("DMA_SRC(pass): %x", data);
-        else begin
-            $display("DMA_SRC(fail): %x", data);
-            @(posedge clk);
-            $finish;
-        end
-        apb_if.read(`DST_ADDR, data);
-        if (data===0)
-            $display("DMA_DST(pass): %x", data);
-        else begin
-            $display("DMA_DST(fail): %x", data);
-            @(posedge clk);
-            $finish;
-        end
-        apb_if.read(`LEN_ADDR, data);
-        if (data===0)
-            $display("DMA_LEN(pass): %x", data);
-        else begin
-            $display("DMA_LEN(fail): %x", data);
-            @(posedge clk);
-            $finish;
-        end
-        apb_if.read(`STAT_ADDR, data);
-        if (data===1)
-            $display("DMA_STATUS(pass): %x", data);
-        else begin
-            $display("DMA_STATUS(fail): %x", data);
-            @(posedge clk);
-            $finish;
-        end
-    endtask
-
-    task test_dma(input int src, input int dst, input int len);
-        int data;
-        int word;
-
-        $display("---------------------------------------------------");
-        $display("Load data to memory");
-        $display("---------------------------------------------------");
-        for (int i=src; i<(src+len); i=i+4) begin
-            word = $random; 
-            u_mem.write_word(i, word);
-        end
-
-        $display("---------------------------------------------------");
-        $display("Configuration test");
-        $display("---------------------------------------------------");
-        apb_if.write(`SRC_ADDR, src);
-        apb_if.read(`SRC_ADDR, data);
-        if (data===src)
-            $display("DMA_SRC(pass): %x", data);
-        else begin
-            $display("DMA_SRC(fail): %x", data);
-            @(posedge clk);
-            $finish;
-        end
-        apb_if.write(`DST_ADDR, dst);
-        apb_if.read(`DST_ADDR, data);
-        if (data===dst)
-            $display("DMA_DST(pass): %x", data);
-        else begin
-            $display("DMA_DST(fail): %x", data);
-            @(posedge clk);
-            $finish;
-        end
-        apb_if.write(`LEN_ADDR, len);
-        apb_if.read(`LEN_ADDR, data);
-        if (data===len)
-            $display("DMA_LEN(pass): %x", data);
-        else begin
-            $display("DMA_LEN(fail): %x", data);
-            @(posedge clk);
-            $finish;
-        end
-
-        $display("---------------------------------------------------");
-        $display("DMA start");
-        $display("---------------------------------------------------");
-        apb_if.write(`START_ADDR, 32'h1);
-
-        $display("---------------------------------------------------");
-        $display("Wait for a DMA completion");
-        $display("---------------------------------------------------");
-        data = 0;
-        while (data!=1) begin
-            apb_if.read(`STAT_ADDR, data);
-            repeat (100) @(posedge clk);
-            $write(".");
-        end
-        $display("");
-        @(posedge clk);
-
-        $display("---------------------------------------------------");
-        $display("DMA completed");
-        $display("---------------------------------------------------");
-
-        repeat (len) @(posedge clk);    // to make sure data is written
-
-        $display("---------------------------------------------------");
-        $display("verify data");
-        $display("---------------------------------------------------");
-        for (int i=0; i<len; i=i+4) begin
-            logic [31:0]        src_word;
-            logic [31:0]        dst_word;
-            src_word            = u_mem.read_word(src+i);
-            dst_word            = u_mem.read_word(dst+i);
-            if (src_word!==dst_word) begin
-                $display("Mismatch! (src:%x @%x, dst:%x @%x", src_word, src+i, dst_word, dst+i);
-            end
-        end
-    endtask
-
-    int             src,
-                    dst,
-                    len;
-
-    // main
-    initial begin
-        test_init();
-
-        src = 'h0000_1000;
-        dst = 'h0000_2000;
-        len = 'h0100;
-        test_dma(src, dst, len);
-
-        $finish;
-    end
-
-
-    AXI_SLAVE   u_mem (
-        .clk                    (clk),
-        .rst_n                  (rst_n),
-
-        .aw_ch                  (aw_ch),
-        .w_ch                   (w_ch),
-        .b_ch                   (b_ch),
-        .ar_ch                  (ar_ch),
-        .r_ch                   (r_ch)
-    );
 
     DMAC_TOP  u_DUT (
         .clk                    (clk),
@@ -256,5 +112,123 @@ module DMAC_TOP_TB ();
         .rvalid_i               (r_ch.rvalid),
         .rready_o               (r_ch.rready)
     );
+
+    AXI_SLAVE   u_mem (
+        .clk                    (clk),
+        .rst_n                  (rst_n),
+
+        .aw_ch                  (aw_ch),
+        .w_ch                   (w_ch),
+        .b_ch                   (b_ch),
+        .ar_ch                  (ar_ch),
+        .r_ch                   (r_ch)
+    );
+
+    //----------------------------------------------------------
+    // Testbench starts
+    //----------------------------------------------------------
+    task test_init();
+        int data;
+        apb_if.init();
+
+        @(posedge rst_n);                   // wait for a release of the reset
+        repeat (10) @(posedge clk);         // wait another 10 cycles
+
+        apb_if.read(`IP_VER, data);
+        $display("---------------------------------------------------");
+        $display("IP version: %x", data);
+        $display("---------------------------------------------------");
+
+        $display("---------------------------------------------------");
+        $display("Load data to memory");
+        $display("---------------------------------------------------");
+        for (int i=0; i<`SRC_REGION_SIZE; i=i+4) begin
+            // write random data
+            u_mem.write_word(`SRC_REGION_START+i, $random);
+        end
+    endtask
+
+    // this task must be declared automatic so that each invocation uses
+    // different memories
+    task automatic test_dma(input int ch, input int src, input int dst, input int len);
+        int data;
+        $display("Ch[%d] DMA configure %x -> %x (%x)", ch, src, dst, len);
+        apb_if.write((ch+1)*`CH_SFR_SIZE+`SRC_OFFSET, src);
+        apb_if.read((ch+1)*`CH_SFR_SIZE+`SRC_OFFSET, data);
+        if (data!==src) begin
+            $display("DMA_SRC[%d](fail): %x", ch, data);
+            @(posedge clk);
+            $finish;
+        end
+        apb_if.write((ch+1)*`CH_SFR_SIZE+`DST_OFFSET, dst);
+        apb_if.read((ch+1)*`CH_SFR_SIZE+`DST_OFFSET, data);
+        if (data!==dst) begin
+            $display("DMA_DST[%d](fail): %x", ch, data);
+            @(posedge clk);
+            $finish;
+        end
+        apb_if.write((ch+1)*`CH_SFR_SIZE+`LEN_OFFSET, len);
+        apb_if.read((ch+1)*`CH_SFR_SIZE+`LEN_OFFSET, data);
+        if (data!==len) begin
+            $display("DMA_LEN[%d](fail): %x", ch, data);
+            @(posedge clk);
+            $finish;
+        end
+
+        $display("Ch[%d] DMA start", ch);
+        apb_if.write((ch+1)*`CH_SFR_SIZE+`CMD_OFFSET, 32'h1);
+
+        data = 0;
+        while (data!=1) begin
+            apb_if.read((ch+1)*`CH_SFR_SIZE+`STAT_OFFSET, data);
+            repeat (100) @(posedge clk);
+            $display("Ch[%d] Waiting for a DMA completion", ch);
+        end
+        @(posedge clk);
+
+        $display("Ch[%d] DMA completed", ch);
+        for (int i=0; i<len; i=i+4) begin
+            logic [31:0]        src_word;
+            logic [31:0]        dst_word;
+            src_word            = u_mem.read_word(src+i);
+            dst_word            = u_mem.read_word(dst+i);
+            if (src_word!==dst_word) begin
+                $display("Ch[%d] Mismatch! (src:%x @%x, dst:%x @%x", ch, src_word, src+i, dst_word, dst+i);
+                @(posedge clk);
+                $finish;
+            end
+        end
+        $display("Ch[%d] DMA passed", ch);
+    endtask
+
+    // this task must be declared automatic so that each invocation uses
+    // different memories
+    task automatic test_channel(input int ch, input int test_cnt);
+        int         src, dst, len;
+
+        for (int i=0; i<test_cnt; i++) begin
+            src = 'h0000_1000;
+            dst = 'h0000_2000;
+            len = 'h0100;
+            test_dma(ch, src, (ch+1)*`DST_REGION_STRIDE+dst, len);
+        end
+    endtask
+
+
+    // main
+    initial begin
+        test_init();
+
+        // run 4 channel tests simultaneously
+        fork
+            test_channel(0, 100);
+            test_channel(1, 100);
+            test_channel(2, 100);
+            test_channel(3, 100);
+        join
+
+        $finish;
+    end
+
 
 endmodule

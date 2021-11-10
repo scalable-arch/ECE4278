@@ -96,6 +96,12 @@ interface APB (
     logic   [31:0]              prdata;
     logic                       pslverr;
 
+    // a semaphore to allow only one access at a time
+    semaphore                   sema;
+    initial begin
+        sema                        = new(1);
+    end
+
     modport master (
         input           clk,
         input           pready, prdata, pslverr,
@@ -110,8 +116,10 @@ interface APB (
         pwdata                  = 32'd0;
     endtask
 
-    task write(input int addr,
-               input int data);
+    task automatic write(input int addr,
+                         input int data);
+        // during a write, another threads cannot access APB
+        sema.get(1);
         #1
         psel                    = 1'b1;
         penable                 = 1'b0;
@@ -132,10 +140,16 @@ interface APB (
         paddr                   = 'hX;
         pwrite                  = 1'bx;
         pwdata                  = 'hX;
+
+        // release the semaphore
+        sema.put(1);
     endtask
 
-    task read(input int addr,
-              output int data);
+    task automatic read(input int addr,
+                        output int data);
+        // during a read, another threads cannot access APB
+        sema.get(1);
+
         #1
         psel                    = 1'b1;
         penable                 = 1'b0;
@@ -157,6 +171,9 @@ interface APB (
         paddr                   = 'hX;
         pwrite                  = 1'bx;
         pwdata                  = 'hX;
+
+        // release the semaphore
+        sema.put(1);
     endtask
 
 endinterface
