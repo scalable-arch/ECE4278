@@ -1,0 +1,79 @@
+// Copyright (c) 2021 Sungkyunkwan University
+//
+// Authors:
+// - Jungrae Kim <dale40@skku.edu>
+
+regfile channel_sfr
+{
+    reg {
+        field {
+            desc = "The start address of the source range.";
+            sw = rw;
+            hw = r;
+            reset = 32'h0000_0000;
+        } start_addr[31:0];	// 32b field
+    } DMA_SRC @0x0;
+    reg {
+        field {
+            desc = "The start address of the destination range.";
+            sw = rw;
+            hw = r;
+            reset = 32'h0000_0000;
+        } start_addr[31:0];	// 32b field
+    } DMA_DST;	// Without offset information, this register will
+                // have a continous address next to the previous reg (0x104)
+    reg {
+        field {
+            desc = "The number of bytes to be transferred from the source to the destination.";
+            sw = rw;
+            hw = r;
+            reset = 16'h0000;
+        } byte_len[15:0];
+    } DMA_LEN;	// Without offset information, this register will
+                // have a continous address next to the previous reg (0x108)
+    reg {
+        field {
+            desc = "Writing 1 to this field will initiate a DMA transfer based on DMA_SRC, DMA_DST, and DMA_LEN registers.
+				Software must not write 1 when there's an on-going transfer.
+			   	Writing 0 to this field does not affect operation.";
+			sw = w;
+			hw = r;
+            singlepulse;
+            reset = 1'b0;
+        } start;
+    } DMA_CMD;	// Without offset information, this register will
+                // have a continous address next to the previous reg (0x10C)
+    reg {
+        field {
+            desc = "This field is 1 when there's no on-going DMA transfer.
+                Software must wait this field to be 1 for a completion of a transfer
+                Software must not initiate a DMA transfer when this field is 0.";
+            sw = r;
+			hw = w;
+        } done;
+    } DMA_STATUS;	// Without offset information,
+                // have a continous address next to the previous reg (0x110)
+};
+
+addrmap DMAC_CFG {
+    name = "DMA controller address map";
+    desc = "Address map of ECE4278 DMA controller project";
+
+	// use anonymous definition as registers are instantiated only once
+    reg {
+        field {
+            desc = "The version of this DMA controller.
+				The upper 16 bits represent the major version.
+				The middle 8 bits represent the minor version.
+				The lowest 8 bits represent the micro version.
+			   	This document describes behaviors of major verion 2.";
+            sw = r;
+            hw = na;
+            reset = 32'h0002_0101;
+        } version[31:0];
+    } DMA_VER @0x0;
+	channel_sfr CH0 @0x100;
+	channel_sfr CH1 @0x200;
+	channel_sfr CH2 @0x300;
+	channel_sfr CH3 @0x400;
+};

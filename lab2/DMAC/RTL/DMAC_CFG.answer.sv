@@ -51,19 +51,23 @@ module DMAC_CFG
     // pwdata  :    |   1   |
     // start   : _______----_____________________________
 
-    wire    wren;
-    assign  wren                = // fill your code here
-    always @(posedge clk) begin
-        // fill
-        // your
-        // code
-        // here
-    end
-    wire    start;
-    assign  start               = // fill your code here
+    wire    wren                = psel_i & penable_i & pwrite_i;
 
-    // Read
-    reg     [31:0]              rdata;
+    always_ff @(posedge clk) begin
+        if (!rst_n) begin
+            src_addr            <= 32'd0;
+            dst_addr            <= 32'd0;
+            byte_len            <= 16'd0;
+        end
+        else if (wren) begin
+            case (paddr_i)
+                'h100: src_addr         <= pwdata_i[31:0];
+                'h104: dst_addr         <= pwdata_i[31:0];
+                'h108: byte_len         <= pwdata_i[15:0];
+            endcase
+        end
+    end
+    wire    start               = wren & (paddr_i=='h10C) & pwdata_i[0];
 
     //----------------------------------------------------------
     // READ
@@ -77,12 +81,24 @@ module DMAC_CFG
     // penable    : _______----_____________________________
     // pwrite     : ________________________________________
     // reg update : ___----_________________________________
-    //
-    always @(posedge clk) begin
-        // fill
-        // your
-        // code
-        // here
+    // prdata     :        |DATA
+
+    reg     [31:0]              rdata;
+
+    always_ff @(posedge clk) begin
+        if (!rst_n) begin
+            rdata               <= 32'd0;
+        end
+        else if (psel_i & !penable_i & !pwrite_i) begin // in the setup cycle in the APB state diagram
+            case (paddr_i)
+                'h0:   rdata            <= 32'h0001_0101;
+                'h100: rdata            <= src_addr;
+                'h104: rdata            <= dst_addr;
+                'h108: rdata            <= {16'd0, byte_len};
+                'h110: rdata            <= {31'd0, done_i};
+                default: rdata          <= 32'd0;
+            endcase
+        end
     end
 
     // output assignments

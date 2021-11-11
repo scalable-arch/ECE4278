@@ -77,7 +77,7 @@ module DMAC_ENGINE
                                 done;
 
     // it's desirable to code registers in a simple way
-    always_ff @(posedge clk)
+    always_ff @(posedge clk) begin
         if (!rst_n) begin
             state               <= S_IDLE;
 
@@ -94,12 +94,11 @@ module DMAC_ENGINE
             cnt                 <= cnt_n;
             data_buf            <= data_buf_n;
         end
-
+    end
 
     // this block programs output values and next register values
     // based on states.
-    always_comb
-    begin
+    always_comb begin
         state_n                 = state;
 
         src_addr_n              = src_addr;
@@ -115,51 +114,19 @@ module DMAC_ENGINE
 
         case (state)
             S_IDLE: begin
-                done                    = 1'b1;
-                if (start_i & byte_len_i!=16'd0) begin
-                    src_addr_n              = src_addr_i;
-                    dst_addr_n              = dst_addr_i;
-                    cnt_n                   = byte_len_i;
-
-                    state_n                 = S_RREQ;
-                end
+                // Fill your code here
             end
             S_RREQ: begin
-                arvalid                 = 1'b1;
-
-                if (arready_i) begin
-                    state_n                 = S_RDATA;
-                    src_addr_n              = src_addr + 'd4;
-                end
+                // Fill your code here
             end
             S_RDATA: begin
-                rready                  = 1'b1;
-
-                if (rvalid_i) begin
-                    state_n                 = S_WREQ;
-                    data_buf_n              = rdata_i;
-                end
+                // Fill your code here
             end
             S_WREQ: begin
-                awvalid                 = 1'b1;
-
-                if (awready_i) begin
-                    state_n                 = S_WDATA;
-                    dst_addr_n              = dst_addr + 'd4;
-                    cnt_n                   = cnt - 16'd4;
-                end
+                // Fill your code here
             end
             S_WDATA: begin
-                wvalid                  = 1'b1;
-
-                if (wready_i) begin
-                    if (cnt==16'd0) begin
-                        state_n                 = S_IDLE;
-                    end
-                    else begin
-                        state_n                 = S_RREQ;
-                    end
-                end
+                // Fill your code here
             end
         endcase
     end
@@ -182,7 +149,6 @@ module DMAC_ENGINE
 
     assign  bready_o                = 1'b1;
 
-    assign  arvalid_o               = arvalid;
     assign  araddr_o                = src_addr;
     assign  arid_o                  = 4'd0;
     assign  arlen_o                 = 4'd0;     // 1-burst
@@ -191,5 +157,4 @@ module DMAC_ENGINE
     assign  arvalid_o               = arvalid;
 
     assign  rready_o                = rready;
-
 endmodule

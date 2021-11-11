@@ -68,21 +68,13 @@ module DMAC_ENGINE
     reg     [31:0]              src_addr,   src_addr_n;
     reg     [31:0]              dst_addr,   dst_addr_n;
     reg     [15:0]              cnt,        cnt_n;
-    reg     [3:0]               wcnt,       wcnt_n;
+    reg     [31:0]              data_buf,   data_buf_n;
 
     reg                         arvalid,
                                 rready,
                                 awvalid,
                                 wvalid,
-                                wlast,
                                 done;
-
-    wire                        fifo_full,
-                                fifo_empty;
-    reg                         fifo_wren,
-                                fifo_rden;
-    wire    [31:0]              fifo_rdata;
-
 
     // it's desirable to code registers in a simple way
     always_ff @(posedge clk)
@@ -92,8 +84,7 @@ module DMAC_ENGINE
             src_addr            <= 32'd0;
             dst_addr            <= 32'd0;
             cnt                 <= 16'd0;
-
-            wcnt                <= 4'd0;
+            data_buf            <= 32'd0;
         end
         else begin
             state               <= state_n;
@@ -101,47 +92,90 @@ module DMAC_ENGINE
             src_addr            <= src_addr_n;
             dst_addr            <= dst_addr_n;
             cnt                 <= cnt_n;
-
-            wcnt                <= wcnt_n;
+            data_buf            <= data_buf_n;
         end
 
 
     // this block programs output values and next register values
     // based on states.
-    always_comb begin
-        // **********************    
-        // **********************    
-        // FILL YOUR CODE HERE
-        // **********************    
-        // **********************    
+    always_comb
+    begin
+        state_n                 = state;
+
+        src_addr_n              = src_addr;
+        dst_addr_n              = dst_addr;
+        cnt_n                   = cnt;
+        data_buf_n              = data_buf;
+
+        arvalid                 = 1'b0;
+        rready                  = 1'b0;
+        awvalid                 = 1'b0;
+        wvalid                  = 1'b0;
+        done                    = 1'b0;
+
+        case (state)
+            S_IDLE: begin
+                done                    = 1'b1;
+                if (start_i & byte_len_i!=16'd0) begin
+                    src_addr_n              = src_addr_i;
+                    dst_addr_n              = dst_addr_i;
+                    cnt_n                   = byte_len_i;
+
+                    state_n                 = S_RREQ;
+                end
+            end
+            S_RREQ: begin
+                arvalid                 = 1'b1;
+
+                if (arready_i) begin
+                    state_n                 = S_RDATA;
+                    src_addr_n              = src_addr + 'd4;
+                end
+            end
+            S_RDATA: begin
+                rready                  = 1'b1;
+
+                if (rvalid_i) begin
+                    state_n                 = S_WREQ;
+                    data_buf_n              = rdata_i;
+                end
+            end
+            S_WREQ: begin
+                awvalid                 = 1'b1;
+
+                if (awready_i) begin
+                    state_n                 = S_WDATA;
+                    dst_addr_n              = dst_addr + 'd4;
+                    cnt_n                   = cnt - 16'd4;
+                end
+            end
+            S_WDATA: begin
+                wvalid                  = 1'b1;
+
+                if (wready_i) begin
+                    if (cnt==16'd0) begin
+                        state_n                 = S_IDLE;
+                    end
+                    else begin
+                        state_n                 = S_RREQ;
+                    end
+                end
+            end
+        endcase
     end
-
-    DMAC_FIFO   u_fifo
-    (
-        .clk                        (clk),
-        .rst_n                      (rst_n),
-
-        .full_o                     (fifo_full),
-        .wren_i                     (fifo_wren),
-        .wdata_i                    (rdata_i),
-
-        .empty_o                    (fifo_empty),
-        .rden_i                     (fifo_rden),
-        .rdata_o                    (fifo_rdata)
-    );
 
     // Output assigments
     assign  done_o                  = done;
 
     assign  awid_o                  = 4'd0;
     assign  awaddr_o                = dst_addr;
-    assign  awlen_o                 = (cnt >= 'd64) ? 4'hF: cnt[5:2]-4'h1;
+    assign  awlen_o                 = 4'd0;     // 1-burst
     assign  awsize_o                = 3'b010;   // 4 bytes per transfer
     assign  awburst_o               = 2'b01;    // incremental
     assign  awvalid_o               = awvalid;
 
     assign  wid_o                   = 4'd0;
-    assign  wdata_o                 = fifo_rdata;
+    assign  wdata_o                 = data_buf;
     assign  wstrb_o                 = 4'b1111;  // all bytes within 4 byte are valid
     assign  wlast_o                 = 1'b1;
     assign  wvalid_o                = wvalid;
@@ -151,11 +185,11 @@ module DMAC_ENGINE
     assign  arvalid_o               = arvalid;
     assign  araddr_o                = src_addr;
     assign  arid_o                  = 4'd0;
-    assign  arlen_o                 = (cnt >= 'd64) ? 4'hF: cnt[5:2]-4'h1;
+    assign  arlen_o                 = 4'd0;     // 1-burst
     assign  arsize_o                = 3'b010;   // 4 bytes per transfer
     assign  arburst_o               = 2'b01;    // incremental
     assign  arvalid_o               = arvalid;
 
-    assign  rready_o                = rready & !fifo_full;
+    assign  rready_o                = rready;
 
 endmodule
