@@ -140,18 +140,16 @@ module DMAC_TOP
         .rst_n                  (rst_n),
 
         .src_valid_i            (arvalid_vec),
-        .src_last_i             ({1'b1, 1'b1, 1'b1, 1'b1}),
+        .src_ready_o            (arready_vec),
         .src_data_i             ({
                                   {arid_vec[0], araddr_vec[0], arlen_vec[0], arsize_vec[0], arburst_vec[0]},
                                   {arid_vec[1], araddr_vec[1], arlen_vec[1], arsize_vec[1], arburst_vec[1]},
                                   {arid_vec[2], araddr_vec[2], arlen_vec[2], arsize_vec[2], arburst_vec[2]},
                                   {arid_vec[3], araddr_vec[3], arlen_vec[3], arsize_vec[3], arburst_vec[3]}}),
-        .src_ready_o            (arready_vec),
 
         .dst_valid_o            (arvalid_o),
-        .dst_last_o             (/* FLOATING */),
-        .dst_data_o             ({arid_o, araddr_o, arlen_o, arsize_o, arburst_o}),
-        .dst_ready_i            (arready_i)
+        .dst_ready_i            (arready_i),
+        .dst_data_o             ({arid_o, araddr_o, arlen_o, arsize_o, arburst_o})
     );
 
     DMAC_ARBITER #(
@@ -164,23 +162,21 @@ module DMAC_TOP
         .rst_n                  (rst_n),
 
         .src_valid_i            (awvalid_vec),
-        .src_last_i             ({1'b1, 1'b1, 1'b1, 1'b1}),
+        .src_ready_o            (awready_vec),
         .src_data_i             ({
                                   {awid_vec[0], awaddr_vec[0], awlen_vec[0], awsize_vec[0], awburst_vec[0]},
                                   {awid_vec[1], awaddr_vec[1], awlen_vec[1], awsize_vec[1], awburst_vec[1]},
                                   {awid_vec[2], awaddr_vec[2], awlen_vec[2], awsize_vec[2], awburst_vec[2]},
                                   {awid_vec[3], awaddr_vec[3], awlen_vec[3], awsize_vec[3], awburst_vec[3]}}),
-        .src_ready_o            (awready_vec),
 
         .dst_valid_o            (awvalid_o),
-        .dst_last_o             (/* FLOATING */),
-        .dst_data_o             ({awid_o, awaddr_o, awlen_o, awsize_o, awburst_o}),
-        .dst_ready_i            (awready_i)
+        .dst_ready_i            (awready_i),
+        .dst_data_o             ({awid_o, awaddr_o, awlen_o, awsize_o, awburst_o})
     );
 
     DMAC_ARBITER #(
         .N_MASTER               (N_CH),
-        .DATA_SIZE              ($bits(wid_o)+$bits(wdata_o)+$bits(wstrb_o))
+        .DATA_SIZE              ($bits(wid_o)+$bits(wdata_o)+$bits(wstrb_o)+$bits(wlast_o))
     )
     u_w_arbiter
     (
@@ -188,18 +184,16 @@ module DMAC_TOP
         .rst_n                  (rst_n),
 
         .src_valid_i            (wvalid_vec),
-        .src_last_i             (wlast_vec),
-        .src_data_i             ({
-                                  {wid_vec[0], wdata_vec[0], wstrb_vec[0]},
-                                  {wid_vec[1], wdata_vec[1], wstrb_vec[1]},
-                                  {wid_vec[2], wdata_vec[2], wstrb_vec[2]},
-                                  {wid_vec[3], wdata_vec[3], wstrb_vec[3]}}),
         .src_ready_o            (wready_vec),
+        .src_data_i             ({
+                                  {wid_vec[0], wdata_vec[0], wstrb_vec[0], wlast_vec[0]},
+                                  {wid_vec[1], wdata_vec[1], wstrb_vec[1], wlast_vec[1]},
+                                  {wid_vec[2], wdata_vec[2], wstrb_vec[2], wlast_vec[2]},
+                                  {wid_vec[3], wdata_vec[3], wstrb_vec[3], wlast_vec[3]}}),
 
         .dst_valid_o            (wvalid_o),
-        .dst_last_o             (wlast_o),
-        .dst_data_o             ({wid_o, wdata_o, wstrb_o}),
-        .dst_ready_i            (wready_i)
+        .dst_ready_i            (wready_i),
+        .dst_data_o             ({wid_o, wdata_o, wstrb_o, wlast_o})
     );
 
     assign  bready_o                = (bid_i=='d0) ? bready_vec[0] :
