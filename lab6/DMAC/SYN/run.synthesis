@@ -17,15 +17,17 @@ export FILELIST_RTL="$LAB_PATH/RTL/filelist.f"
 if [[ $1 == "top" ]]; then
     echo "Selected DMAC_TOP"
     SCRIPT_PATH="$LAB_PATH/SYN/script.tcl"
+    RUN_DIR="OUTPUT_TOP"
 elif [[ $1 == "fifo" ]]; then
     echo "Selected DMAC_FIFO"
     SCRIPT_PATH="$LAB_PATH/SYN/script_fifo.tcl"
+    RUN_DIR="OUTPUT_FIFO"
 else
     print_help
 fi
 
 echo "Cleaning up the old directory"
-#rm -rf $RUN_DIR
+rm -rf $RUN_DIR
 echo "Creating a new directory"
 mkdir -p $RUN_DIR
 cd $RUN_DIR
