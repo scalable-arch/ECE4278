@@ -1,0 +1,17 @@
+#!/bin/bash
+
+source ../../../scripts/common.sh
+
+export LAB_PATH="$PWD/../"
+export LIBLIST_PATH="$LAB_PATH/SYN/lib_container.tcl"
+export FILELIST_RTL="$LAB_PATH/RTL/filelist.f"
+export SCRIPT_PATH="$LAB_PATH/SYN/script.dft.tcl"
+export RUN_DIR="OUTPUT"
+
+cd $RUN_DIR
+echo "Inserting DFT"
+
+$DC_CMD $DC_OPTIONS -f $SCRIPT_PATH | tee ./dc_shell.log
+echo "DFT Insertion Completed"
+rm -rf *.pvl *.syn *.mr command.log default.svf
+

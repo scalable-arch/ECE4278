@@ -1,1 +1,1 @@
-$LAB_PATH/RTL/DMAC_CFG.sv
+-sverilog $LAB_PATH/RTL/DMAC_CFG.sv
