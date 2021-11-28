@@ -1,6 +1,6 @@
 `define 	TIMEOUT_DELAY 	99999999
 
-module SYSTOLIC_ARRAY_TB ();
+module DATA_PROVIDER_TB ();
 
     //----------------------------------------------------------
     // clock and reset generation
@@ -39,21 +39,21 @@ module SYSTOLIC_ARRAY_TB ();
         $fsdbDumpvars(0, u_DUT);
     end
 
+    localparam                  AW      = 6;
     localparam                  DW      = 32;
     localparam                  SIZE    = 4;
     localparam  reg [7:0]       LENGTH  = 8'd8;
 
     reg                         start;
     wire                        done;
-    reg     [DW-1:0]            a[SIZE][LENGTH];
-    reg     [DW-1:0]            b[LENGTH][SIZE];
-    reg     [DW-1:0]            a_shifted[SIZE][LENGTH+SIZE];
-    reg     [DW-1:0]            b_shifted[LENGTH+SIZE][SIZE];
-    wire    [2*DW:0]            accum[SIZE][SIZE];
-    int                         k;
+    wire    [DW-1:0]            a_w[SIZE];
+    reg                         sram_wren;
+    reg     [AW-1:0]            sram_waddr,     sram_raddr;
+    reg     [DW*SIZE-1:0]       sram_wdata,     sram_rdata;
 
-    SYSTOLIC_ARRAY
+    DATA_PROVIDER
     #(
+        .AW                     (AW),
         .DW                     (DW),
         .SIZE                   (SIZE)
     )
@@ -64,33 +64,43 @@ module SYSTOLIC_ARRAY_TB ();
         .matrix_width_i         (LENGTH),
         .start_i                (start),
         .done_o                 (done),
-        .a_i                    ({a_shifted[0][k], a_shifted[1][k], a_shifted[2][k], a_shifted[3][k]}),
-        .b_i                    ({b_shifted[k][0], b_shifted[k][1], b_shifted[k][2], b_shifted[k][3]}),
-        .accum_o                (accum)
+        .sram_addr_o            (sram_raddr),
+        .sram_data_i            (sram_rdata),
+        .a_o                    (a_w)
     );
 
-    // Initialize the array, generate expected output,
+    DUAL_PORT_SRAM
+    #(
+        .AW                     (AW),
+        .DW                     (DW*SIZE)
+     )
+    u_mem
+    (
+        .clk                    (clk),
+        .wren_i                 (sram_wren),
+        .waddr_i                (sram_waddr),
+        .wdata_i                (sram_wdata),
+        .raddr_i                (sram_raddr),
+        .rdata_o                (sram_rdata)
+    );
+        
+    reg     [DW-1:0]            a[SIZE][LENGTH];
+    reg     [DW-1:0]            a_shifted[SIZE][LENGTH+SIZE];
+
+    // Initialize the array, write to memory
     // and align the inputs
-    reg     [2*DW:0]            expected_accum[SIZE][SIZE];
     initial begin
         // initialize the array
         for (int i=0; i<SIZE; i++) begin
             for (int j=0; j<LENGTH; j++) begin
                 //a[i][j]                 = 32'd1;
-                //b[j][i]                 = 32'd1;
                 a[i][j]                 = (i+j);
-                b[j][i]                 = (i+j);
             end
         end
 
-        // generate expected output
-        for (int i=0; i<SIZE; i++) begin
-            for (int j=0; j<SIZE; j++) begin
-                expected_accum[i][j] = 0;
-                for (int k=0; k<LENGTH; k++) begin
-                    expected_accum[i][j] += a[i][k] * b[k][j];
-                end
-            end
+        // write to memory
+        for (int i=0; i<LENGTH; i++) begin
+            u_mem.write(i, {a[0][i], a[1][i], a[2][i], a[3][i]});
         end
 
         // align the inputs
@@ -99,14 +109,11 @@ module SYSTOLIC_ARRAY_TB ();
             // shifted[0]   :   a[0][0] x       x       x
             // shifted[1]   :   a[0][1] a[1][0] x       x
             // shifted[2]   :   a[0][2] a[1][1] a[2][0] x
-            // init
             for (int j=0; j<LENGTH+SIZE; j++) begin
                 a_shifted[i][j]             = 32'hX;
-                b_shifted[j][i]             = 32'hX;
             end
             for (int j=0; j<LENGTH; j++) begin
                 a_shifted[i][j+i]           = a[i][j];
-                b_shifted[j+i][i]           = b[j][i];
             end
         end
     end
@@ -116,41 +123,34 @@ module SYSTOLIC_ARRAY_TB ();
         // drive reset values
         start                   = 1'b0;
 
-        k                       = 0;
         // wait for a reset release
         repeat (100) @(posedge clk);
 
         // start
         start                   = 1'b1;
         @(posedge clk);
-        k++;    // increment the index to feed the next data
         start                   = 1'b0;
         @(posedge clk);
-        while (!done) begin
-            if (k<LENGTH+SIZE) begin
-                k++;
-            end
-            else begin
-                k               = 0;
-            end
-            @(posedge clk);
-        end
-        @(posedge clk);
 
-        // verify the results
-        for (int i=0; i<SIZE; i++) begin
-            $write("@%3drow: ", i);
-            for (int j=0; j<SIZE; j++) begin
-                $write("%8d (%8d)", accum[i][j], expected_accum[i][j]);
-                if (accum[i][j]!=expected_accum[i][j]) begin
-                    $display("\n Mismatch at (%d, %d): real (%x) vs. expected (%x)",
-                            i, j, accum[i][j], expected_accum[i][j]);
+        // compare
+        for (int j=0; j<LENGTH+SIZE; j++) begin
+            for (int i=0; i<SIZE; i++) begin
+                $display("(%d, %d) %x(real), %x(expected)", i, j, a_w[i], a_shifted[i][j]);
+                if (a_w[i]!=a_shifted[i][j]) begin
+                    $display("Mismatch!");
                     @(posedge clk);
                     $finish;
                 end
             end
-            $write("\n");
+            @(posedge clk);
         end
+
+        // Wait for completion
+        while (!done) begin
+            @(posedge clk);
+        end
+        @(posedge clk);
+
         $finish;
     end
 

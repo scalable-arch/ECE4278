@@ -14,14 +14,22 @@ module DUAL_PORT_SRAM
 
     reg [DW-1:0]                ram[2**AW-1:0]; // ** is exponential
 
-    always_ff @(posedge clk) begin
+    always @(posedge clk) begin
         if (wren_i) begin
             ram[waddr_i]                <= wdata_i;
         end
     end
 
-    always_ff @(posedge clk) begin
+    always @(posedge clk) begin
         rdata_o                 <= ram[raddr_i];
     end
+
+    function write;
+    input   [AW-1:0]    addr;
+    input   [DW-1:0]    data;
+    begin
+        ram[addr]               = data;
+    end
+    endfunction
 
 endmodule

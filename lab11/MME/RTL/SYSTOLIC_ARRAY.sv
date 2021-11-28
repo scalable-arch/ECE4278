@@ -72,28 +72,28 @@ module SYSTOLIC_ARRAY
     //----------------------------------------------------------
     // Control logic
     //----------------------------------------------------------
-    enum reg {S_IDLE, S_BUSY}       state, state_n;
+    enum reg {S_IDLE, S_BUSY}   state,  state_n;
     // counter to generate clr/hold signals
-    reg     [8:0]                   cnt, cnt_n;
-    reg                             complete;
+    reg     [8:0]               cnt, cnt_n;
+    reg                         complete;
 
     always_comb begin
-        state_n                     = state;
-        cnt_n                       = cnt;
+        state_n                 = state;
+        cnt_n                   = cnt;
 
         if (state==S_IDLE) begin
             if (start_i) begin
-                state_n                     = S_BUSY;
-                cnt_n                       = 'd1;
+                state_n                 = S_BUSY;
+                cnt_n                   = 'd1;
             end
         end
         else begin  // S_BUSY
             if (complete) begin
-                state_n                     = S_IDLE;
-                cnt_n                       = 'd0;
+                state_n                 = S_IDLE;
+                cnt_n                   = 'd0;
             end
             else begin
-                cnt_n                       = cnt+'d1;
+                cnt_n                   = cnt+'d1;
             end
         end
     end
