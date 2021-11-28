@@ -1,0 +1,2 @@
+-sverilog $LAB_PATH/RTL/PE.sv
+-sverilog $LAB_PATH/RTL/SYSTOLIC_ARRAY.sv
