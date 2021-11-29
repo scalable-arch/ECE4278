@@ -1,0 +1,27 @@
+#!/bin/bash
+
+source ../../../scripts/common.sh
+
+export LD_LIBRARY_PATH="/opt/glibc-2.14/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+export LM_LICENSE_FILE="/home/ScalableArchiLab/RDL/license.lic:/home/ScalableArchiLab/RDL/license1.lic:$LM_LICENSE_FILE"
+
+echo "Cleaning up the old directory"
+rm -rf $RUN_DIR
+echo "Creating a new directory"
+mkdir -p $RUN_DIR
+cd $RUN_DIR
+
+RDL_INPUT="../MME.rdl"
+
+# Generate synthesizable SystemVerilog
+$CSR_CMD $RDL_INPUT -c ../MME.css -o MME_CFG -t sv
+# Generate Microsoft HTML
+$CSR_CMD $RDL_INPUT -c ../MME.css -o MME_CFG -t ahtml
+# Generate Microsoft Word Dcoument
+$CSR_CMD $RDL_INPUT -c ../MME.css -o MME_CFG -t docx
+# Generate UVM 2020
+$CSR_CMD $RDL_INPUT -c ../MME.css -o MME_CFG -t uvm_2020
+# Generate IP-XACT 2014
+$CSR_CMD $RDL_INPUT -c ../MME.css -o MME_CFG -t ipxact_2014
+# Generate Addressmap C header
+$CSR_CMD $RDL_INPUT -c ../MME.css -o MME_CFG -t ah

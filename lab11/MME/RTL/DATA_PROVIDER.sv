@@ -1,8 +1,9 @@
 module DATA_PROVIDER
 #(
-    parameter AW                = 6,    // address width
     parameter DW                = 32,   // data width
-    parameter SIZE              = 4
+    parameter SA_WIDTH          = 4,    // systolic array width in PE count
+    parameter BUF_AW            = 6,    // buffer address width
+    parameter BUF_DW            = DW * SA_WIDTH // buffer data width
  )
 (
     input   wire                clk,
@@ -11,9 +12,9 @@ module DATA_PROVIDER
     input   wire                start_i,
     output  wire                done_o,
     // SRAM read interface
-    output  wire    [AW-1:0]    sram_addr_o,
-    input   wire    [DW*SIZE-1:0] sram_data_i,
-    output  signed  [DW-1:0]    a_o[SIZE]
+    output  wire    [BUF_AW-1:0] sram_addr_o,
+    input   wire    [BUF_DW-1:0] sram_data_i,
+    output  signed  [DW-1:0]    a_o[SA_WIDTH]
 );
 
     //-------------------------------------------------------------
@@ -33,14 +34,14 @@ module DATA_PROVIDER
     //----------------------------------------------------------
     enum reg {S_IDLE, S_BUSY}   state,  state_n;
     // +1 bit for additional cycles
-    reg     [AW:0]              addr,   addr_n;
+    reg     [BUF_AW:0]          addr,   addr_n;
     reg                         complete;
 
     always_comb begin
         state_n                 = state;
         addr_n                  = addr;
 
-        complete                = (addr==mat_width_i+SIZE-'d1);
+        complete                = (addr==mat_width_i+SA_WIDTH-'d1);
 
         if (state==S_IDLE) begin
             if (start_i) begin
@@ -71,32 +72,32 @@ module DATA_PROVIDER
     end
 
     // shift registers to provide aligned data
-    reg     [DW*SIZE-1:0] sram_data_reg[SIZE-1];
+    reg     [BUF_DW-1:0]        sram_data_reg[SA_WIDTH-1];
     always_ff @(posedge clk) begin
         if (!rst_n) begin
-            for (int i=0; i<(SIZE-1); i++) begin
+            for (int i=0; i<(SA_WIDTH-1); i++) begin
                 sram_data_reg[i]        <= 'd0;
             end
         end
         else begin
             sram_data_reg[0]        <= sram_data_i;
-            for (int i=1; i<(SIZE-1); i++) begin
+            for (int i=1; i<(SA_WIDTH-1); i++) begin
                 sram_data_reg[i]        <= sram_data_reg[i-1];
             end
         end
     end
 
-    reg     signed  [DW-1:0]    a[SIZE];
+    reg     signed  [DW-1:0]    a[SA_WIDTH];
 
     always_comb begin
-        a[0]                = sram_data_i[DW*(SIZE-1)+:DW];
-        for (int i=1; i<SIZE; i++) begin
-            a[i]                = sram_data_reg[i-1][DW*(SIZE-1-i)+:DW];
+        a[0]                = sram_data_i[DW*(SA_WIDTH-1)+:DW];
+        for (int i=1; i<SA_WIDTH; i++) begin
+            a[i]                = sram_data_reg[i-1][DW*(SA_WIDTH-1-i)+:DW];
         end
     end
 
     // output assignments
-    assign  sram_addr_o             = addr[AW-1:0];
+    assign  sram_addr_o             = addr[BUF_AW-1:0];
     assign  done_o                  = (state==S_IDLE);
     assign  a_o                     = a;
 

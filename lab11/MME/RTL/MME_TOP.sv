@@ -5,9 +5,9 @@
 
 module MME_TOP
 #(
-    parameter AW                = 6,
+    parameter BUF_AW            = 6,
     parameter DW                = 32,   // data width
-    parameter SA_SIZE           = 4     // systolic array width in PE count
+    parameter SA_WIDTH          = 4     // systolic array width in PE count
  )
 (
     input   wire                clk,
@@ -25,17 +25,12 @@ module MME_TOP
 );
 
     // Systolic array width in PE count
-    localparam                  SA_WIDTH    = 4;
-    localparam                  BUF_AW      = 6;
     localparam                  BUF_DW      = DW*SA_WIDTH;   // 128
 
+    // interface between CFG <-> other blocks
     wire    [31:0]              mat_a_addr,     mat_b_addr,     mat_c_addr;
     wire    [7:0]               mat_width;
     wire                        engine_start,   engine_done;
-
-    wire    signed [DW-1:0]     a[SA_WIDTH];
-    wire    signed [DW-1:0]     b[SA_WIDTH];
-    wire    signed [2*DW:0]     accum[SA_WIDTH][SA_WIDTH];
 
     wire                        buf_a_wren;
     wire    [BUF_AW-1:0]        buf_a_waddr,    buf_a_raddr;
@@ -45,16 +40,32 @@ module MME_TOP
     wire    [BUF_AW-1:0]        buf_b_waddr,    buf_b_raddr;
     wire    [BUF_DW-1:0]        buf_b_wdata,    buf_b_rdata;
 
-    wire                        dp_start;
-    wire                        sa_start;
-    wire                        sa_done;
+    wire                        mm_start;
+    wire                        mm_done;
+    wire    signed [2*DW:0]     accum[SA_WIDTH][SA_WIDTH];
 
-    assign                      mat_a_addr      = 32'h0000_0000;
-    assign                      mat_b_addr      = 32'h0000_1000;
-    assign                      mat_c_addr      = 32'h0000_2000;
-    assign                      mat_width       = 8'h32;
+    MME_CFG                     u_cfg
+    (
+        .PCLK                   (clk),
+        .RESET                  (rst_n),
+        .PSEL                   (apb_if.psel),
+        .PENABLE                (apb_if.penable),
+        .PADDR                  (apb_if.paddr[9:0]),
+        .PWRITE                 (apb_if.pwrite),
+        .PWDATA                 (apb_if.pwdata),
+        .PRDATA                 (apb_if.prdata),
+        .PREADY                 (apb_if.pready),
 
-    DMAC_ENGINE
+        .MAT_CFG_mat_width      (mat_width),
+        .MAT_A_ADDR_start_addr  (mat_a_addr),
+        .MAT_B_ADDR_start_addr  (mat_b_addr),
+        .MAT_C_ADDR_start_addr  (mat_c_addr),
+        .MME_CMD_start          (engine_start),
+        .MME_STATUS_done        (engine_done)
+    );
+    assign  apb_if.pslverr      = 1'b0;
+
+    DMA_ENGINE
     #(
         .DW                     (DW),
         .SA_WIDTH               (SA_WIDTH),
@@ -92,10 +103,8 @@ module MME_TOP
         .buf_b_wdata_o          (buf_b_wdata),
 
         // other module start interface
-        .dp_start_o             (dp_start),
-        .sa_start_o             (sa_start),
-
-        .sa_done_i              (sa_done),
+        .mm_start_o             (mm_start),
+        .mm_done_i              (mm_done),
         .accum_i                (accum)
     );
 
@@ -131,57 +140,28 @@ module MME_TOP
         .rdata_o                (buf_b_rdata)
     );
 
-    DATA_PROVIDER
+    MM_ENGINE
     #(
-        .AW                     (BUF_AW),
         .DW                     (DW),
-        .SIZE                   (SA_WIDTH)
+        .SA_WIDTH               (SA_WIDTH),
+        .BUF_AW                 (BUF_AW),
+        .BUF_DW                 (BUF_DW)
     )
-    u_provider_a
+    u_mm
     (
         .clk                    (clk),
         .rst_n                  (rst_n),
-        .mat_width_i            (mat_width),
-        .start_i                (dp_start),
-        .done_o                 (/* FLOATING */),
-        .sram_addr_o            (buf_a_raddr),
-        .sram_data_i            (buf_a_rdata),
-        .a_o                    (a)
-    );
 
-    DATA_PROVIDER
-    #(
-        .AW                     (BUF_AW),
-        .DW                     (DW),
-        .SIZE                   (SA_WIDTH)
-    )
-    u_provider_b
-    (
-        .clk                    (clk),
-        .rst_n                  (rst_n),
         .mat_width_i            (mat_width),
-        .start_i                (dp_start),
-        .done_o                 (/* FLOATING */),
-        .sram_addr_o            (buf_b_raddr),
-        .sram_data_i            (buf_b_rdata),
-        .a_o                    (b)
-    );
+        .start_i                (mm_start),
+        .done_o                 (mm_done),
 
-    SYSTOLIC_ARRAY
-    #(
-        .DW                     (DW),
-        .SIZE                   (SA_WIDTH)
-     ) u_sa
-    (
-        .clk                    (clk),
-        .rst_n                  (rst_n),
-        .mat_width_i            (mat_width),
-        .start_i                (sa_start),
-        .done_o                 (sa_done),
-        .a_i                    (a),
-        .b_i                    (b),
+        .buf_a_raddr_o          (buf_a_raddr),
+        .buf_a_rdata_i          (buf_a_rdata),
+        .buf_b_raddr_o          (buf_b_raddr),
+        .buf_b_rdata_i          (buf_b_rdata),
+
         .accum_o                (accum)
     );
-
 
 endmodule
