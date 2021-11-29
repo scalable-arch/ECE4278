@@ -12,8 +12,6 @@
 `define     SRC_REGION_SIZE     32'h0000_2000
 `define     DST_REGION_STRIDE   32'h0000_2000
 
-`define     MAT_WIDTH           4
-
 module MME_TOP_TB ();
 
     //----------------------------------------------------------
@@ -86,8 +84,8 @@ module MME_TOP_TB ();
         .r_ch                   (r_ch)
     );
 
-    logic   signed [31:0]       mat_a[4][`MAT_WIDTH];
-    logic   signed [31:0]       mat_b[`MAT_WIDTH][4];
+    logic   signed [31:0]       mat_a[][];      // 4 x mat_width
+    logic   signed [31:0]       mat_b[][];      // mat_width x 4
 
     //----------------------------------------------------------
     // Testbench starts
@@ -210,21 +208,68 @@ module MME_TOP_TB ();
 
     // main
     initial begin
+        int mat_width;
+
         init();
 
+        //----------------------------------------------------------
+        // 1st test
+        //----------------------------------------------------------
+        // A(4x4) x B(4x4) = C(4x4)
+        mat_width               = 4;
+
+        // mat_a[4][mat_width]
+        mat_a                   = new[4];
+        foreach (mat_a[i])
+            mat_a[i]                = new [mat_width];
+        // mat_b[mat_width][4]
+        mat_b                   = new[mat_width];
+        foreach (mat_b[i])
+            mat_b[i]                = new [4];
+
         // initialize data
-        for (int i=0; i<`MAT_WIDTH; i++) begin
+        for (int i=0; i<mat_width; i++) begin
             for (int j=0; j<4; j++) begin
                 //mat_a[i][j]                 = 32'h1;
                 //mat_b[j][i]                 = 32'h1;
-                mat_a[i][j]                 = i*'h10+j;
-                mat_b[j][i]                 = i*'h100+j;
-                //mat_a[i][j]                 = $urandom()%256;
-                //mat_b[j][i]                 = $urandom()%256;
+                //mat_a[i][j]                 = i*'h10+j;
+                //mat_b[j][i]                 = i*'h100+j;
+                mat_a[i][j]                 = $urandom()%256;
+                mat_b[j][i]                 = $urandom()%256;
             end
         end
 
-        test_mme(`MAT_WIDTH, 32'h0, 32'h1000, 32'h2000);
+        test_mme(mat_width, 32'h0, 32'h1000, 32'h2000);
+
+
+        //----------------------------------------------------------
+        // 2nd test
+        //----------------------------------------------------------
+        // A(4x8) x B(8x4) = C(4x4)
+        mat_width               = 8;
+
+        // mat_a[4][mat_width]
+        mat_a                   = new[4];
+        foreach (mat_a[i])
+            mat_a[i]                = new [mat_width];
+        // mat_b[mat_width][4]
+        mat_b                   = new[mat_width];
+        foreach (mat_b[i])
+            mat_b[i]                = new [4];
+
+        // initialize data
+        for (int i=0; i<mat_width; i++) begin
+            for (int j=0; j<4; j++) begin
+                //mat_a[i][j]                 = 32'h1;
+                //mat_b[j][i]                 = 32'h1;
+                //mat_a[i][j]                 = i*'h10+j;
+                //mat_b[j][i]                 = i*'h100+j;
+                mat_a[i][j]                 = $urandom()%256;
+                mat_b[j][i]                 = $urandom()%256;
+            end
+        end
+
+        test_mme(mat_width, 32'h0, 32'h1000, 32'h2000);
 
         $finish;
     end
