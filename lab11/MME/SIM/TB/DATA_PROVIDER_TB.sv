@@ -61,7 +61,7 @@ module DATA_PROVIDER_TB ();
     (
         .clk                    (clk),
         .rst_n                  (rst_n),
-        .matrix_width_i         (LENGTH),
+        .mat_width_i            (LENGTH),
         .start_i                (start),
         .done_o                 (done),
         .sram_addr_o            (sram_raddr),
@@ -79,6 +79,7 @@ module DATA_PROVIDER_TB ();
         .clk                    (clk),
         .wren_i                 (sram_wren),
         .waddr_i                (sram_waddr),
+        .wbyteenable_i          ({(DW*SIZE/8){1'b1}}),
         .wdata_i                (sram_wdata),
         .raddr_i                (sram_raddr),
         .rdata_o                (sram_rdata)

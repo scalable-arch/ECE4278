@@ -1,12 +1,12 @@
 module SYSTOLIC_ARRAY
 #(
     parameter DW                = 32,   // data width
-    parameter SIZE              = 4
+    parameter SIZE              = 4     // in PE count
  )
 (
     input   wire                clk,
     input   wire                rst_n,
-    input   wire   [7:0]        matrix_width_i,
+    input   wire   [7:0]        mat_width_i,
     input   wire                start_i,
     output  reg                 done_o,
     input   signed [DW-1:0]     a_i[SIZE],
@@ -117,10 +117,10 @@ module SYSTOLIC_ARRAY
     //clr[2][3]               = (cnt=='d5);
     //clr[3][3]               = (cnt=='d6);
 
-    //hold[0][0]              = (cnt>=(matrix_width_i+'d1));
-    //hold[0][1]              = (cnt>=(matrix_width_i+'d2));
-    //hold[1][0]              = (cnt>=(matrix_width_i+'d2));
-    //hold[2][0]              = (cnt>=(matrix_width_i+'d3));
+    //hold[0][0]              = (cnt>=(mat_width_i+'d1));
+    //hold[0][1]              = (cnt>=(mat_width_i+'d2));
+    //hold[1][0]              = (cnt>=(mat_width_i+'d2));
+    //hold[2][0]              = (cnt>=(mat_width_i+'d3));
     //...
     always_comb begin
         // clear signal generation
@@ -135,10 +135,10 @@ module SYSTOLIC_ARRAY
         // hold signal generation
         for (int i=0; i<SIZE; i++) begin
             for (int j=0; j<SIZE; j++) begin
-                hold[i][j]               = (state==S_IDLE) | (cnt>=(matrix_width_i+i+j+1));
+                hold[i][j]               = (state==S_IDLE) | (cnt>=(mat_width_i+i+j+1));
             end
         end
-        complete                    = (cnt==(matrix_width_i+SIZE+SIZE-1));
+        complete                    = (cnt==(mat_width_i+SIZE+SIZE-1));
     end
 
     always_ff @(posedge clk)

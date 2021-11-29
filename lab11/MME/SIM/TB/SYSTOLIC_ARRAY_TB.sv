@@ -61,7 +61,7 @@ module SYSTOLIC_ARRAY_TB ();
     (
         .clk                    (clk),
         .rst_n                  (rst_n),
-        .matrix_width_i         (LENGTH),
+        .mat_width_i            (LENGTH),
         .start_i                (start),
         .done_o                 (done),
         .a_i                    ({a_shifted[0][k], a_shifted[1][k], a_shifted[2][k], a_shifted[3][k]}),

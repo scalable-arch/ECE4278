@@ -7,7 +7,7 @@ module DATA_PROVIDER
 (
     input   wire                clk,
     input   wire                rst_n,
-    input   wire    [7:0]       matrix_width_i,
+    input   wire    [7:0]       mat_width_i,
     input   wire                start_i,
     output  wire                done_o,
     // SRAM read interface
@@ -40,7 +40,7 @@ module DATA_PROVIDER
         state_n                 = state;
         addr_n                  = addr;
 
-        complete                = (addr==matrix_width_i+SIZE-'d1);
+        complete                = (addr==mat_width_i+SIZE-'d1);
 
         if (state==S_IDLE) begin
             if (start_i) begin

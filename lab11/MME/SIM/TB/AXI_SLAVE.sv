@@ -1,4 +1,4 @@
-`include "../TB/AXI_TYPEDEF.svh"
+`include "../../RTL/AXI_TYPEDEF.svh"
 
 module AXI_SLAVE
 #(

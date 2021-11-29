@@ -7,6 +7,7 @@ module DUAL_PORT_SRAM
     input   wire                clk,
     input   wire                wren_i,
     input   wire [AW-1:0]       waddr_i,
+    input   wire [DW/8-1:0]     wbyteenable_i,
     input   wire [DW-1:0]       wdata_i,
     input   wire [AW-1:0]       raddr_i,
     output  reg  [DW-1:0]       rdata_o
@@ -16,7 +17,12 @@ module DUAL_PORT_SRAM
 
     always @(posedge clk) begin
         if (wren_i) begin
-            ram[waddr_i]                <= wdata_i;
+            for (int i=0; i<DW/8; i++) begin
+                // update bytes whose enable bits are set
+                if (wbyteenable_i[i]) begin
+                    ram[waddr_i][8*i+:8]        <= wdata_i[8*i+:8];
+                end
+            end
         end
     end
 
