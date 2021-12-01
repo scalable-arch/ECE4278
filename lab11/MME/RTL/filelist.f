@@ -1,4 +1,4 @@
--sverilog $LAB_PATH/RDL/OUTPUT/MME_CFG.sv
+-sverilog $LAB_PATH/RDL/MME_CFG.sv
 -sverilog $LAB_PATH/RTL/AXI_INTF.sv
 -sverilog $LAB_PATH/RTL/DUAL_PORT_SRAM.sv
 -sverilog $LAB_PATH/RTL/DMA_ENGINE.sv
