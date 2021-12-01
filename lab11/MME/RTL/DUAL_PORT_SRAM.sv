@@ -1,3 +1,8 @@
+// Copyright (c) 2021 Sungkyunkwan University
+//
+// Authors:
+// - Jungrae Kim <dale40@skku.edu>
+
 module DUAL_PORT_SRAM
 #(
     parameter   AW              = 8,    // address width

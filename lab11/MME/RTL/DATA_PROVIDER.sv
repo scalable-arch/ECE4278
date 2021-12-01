@@ -1,3 +1,8 @@
+// Copyright (c) 2021 Sungkyunkwan University
+//
+// Authors:
+// - Jungrae Kim <dale40@skku.edu>
+
 module DATA_PROVIDER
 #(
     parameter DW                = 32,   // data width

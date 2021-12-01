@@ -1,3 +1,8 @@
+// Copyright (c) 2021 Sungkyunkwan University
+//
+// Authors:
+// - Jungrae Kim <dale40@skku.edu>
+
 `define     OFFSET_IP_VER       32'h000
 `define     OFFSET_MAT_CFG      32'h100
 `define     OFFSET_MAT_A_ADDR   32'h200
@@ -114,8 +119,31 @@ module MME_TOP_TB ();
         $display("---------------------------------------------------");
     endtask
 
-    // this task must be declared automatic so that each invocation uses
-    // different memories
+    // allocate and initialize input matrixes
+    task automatic alloc_and_init_inputs(int mat_width);
+        // mat_a[4][mat_width]
+        mat_a                   = new[4];
+        foreach (mat_a[i])
+            mat_a[i]                = new [mat_width];
+        // mat_b[mat_width][4]
+        mat_b                   = new[mat_width];
+        foreach (mat_b[i])
+            mat_b[i]                = new [4];
+
+        // initialize data
+        for (int i=0; i<mat_width; i++) begin
+            for (int j=0; j<4; j++) begin
+                //mat_a[i][j]                 = 32'h1;
+                //mat_b[j][i]                 = 32'h1;
+                //mat_a[i][j]                 = i*'h10+j;
+                //mat_b[j][i]                 = i*'h100+j;
+                mat_a[i][j]                 = $urandom()%256;
+                mat_b[j][i]                 = $urandom()%256;
+            end
+        end
+    endtask
+
+    // test matrix multiplication
     task automatic test_mme(int mat_width, int mat_a_addr, int mat_b_addr, int mat_c_addr);
         int data;
         logic signed [64:0] expected_c[4][4];
@@ -210,29 +238,6 @@ module MME_TOP_TB ();
         $display("MM passed");
         $display("---------------------------------------------------");
         $display("");
-    endtask
-
-    task alloc_and_init_inputs(int mat_width);
-        // mat_a[4][mat_width]
-        mat_a                   = new[4];
-        foreach (mat_a[i])
-            mat_a[i]                = new [mat_width];
-        // mat_b[mat_width][4]
-        mat_b                   = new[mat_width];
-        foreach (mat_b[i])
-            mat_b[i]                = new [4];
-
-        // initialize data
-        for (int i=0; i<mat_width; i++) begin
-            for (int j=0; j<4; j++) begin
-                //mat_a[i][j]                 = 32'h1;
-                //mat_b[j][i]                 = 32'h1;
-                //mat_a[i][j]                 = i*'h10+j;
-                //mat_b[j][i]                 = i*'h100+j;
-                mat_a[i][j]                 = $urandom()%256;
-                mat_b[j][i]                 = $urandom()%256;
-            end
-        end
     endtask
 
     // main

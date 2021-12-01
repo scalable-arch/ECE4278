@@ -1,3 +1,8 @@
+// Copyright (c) 2021 Sungkyunkwan University
+//
+// Authors:
+// - Jungrae Kim <dale40@skku.edu>
+
 `include "../../RTL/AXI_TYPEDEF.svh"
 
 interface AXI_AW_CH

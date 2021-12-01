@@ -1,3 +1,8 @@
+// Copyright (c) 2021 Sungkyunkwan University
+//
+// Authors:
+// - Jungrae Kim <dale40@skku.edu>
+
 module SYSTOLIC_ARRAY
 #(
     parameter DW                = 32,   // data width
@@ -40,9 +45,11 @@ module SYSTOLIC_ARRAY
             end
         end
 
-    //              b_input[0][0]   b_input[0][1]   b_input[0][2]   b_input[0][3]
-    //                      |               |               |               |
-    // a_input[0][0]-       PE00            PE01
+    //              b_input[0][0]       b_input[0][1]
+    //                      |                   |
+    // a_input[0][0]-     PE00 -a_input[0][1]- PE01 - ...
+    //                      |                   |
+    //              b_input[1][0]       b_input[1][1]
 
     // connect the inputs to the 1st stage
     generate

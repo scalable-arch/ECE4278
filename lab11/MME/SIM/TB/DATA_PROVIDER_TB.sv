@@ -1,3 +1,8 @@
+// Copyright (c) 2021 Sungkyunkwan University
+//
+// Authors:
+// - Jungrae Kim <dale40@skku.edu>
+
 `define 	TIMEOUT_DELAY 	99999999
 
 module DATA_PROVIDER_TB ();
