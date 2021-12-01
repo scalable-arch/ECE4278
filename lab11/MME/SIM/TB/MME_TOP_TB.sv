@@ -209,20 +209,10 @@ module MME_TOP_TB ();
         $display("---------------------------------------------------");
         $display("MM passed");
         $display("---------------------------------------------------");
+        $display("");
     endtask
 
-    // main
-    initial begin
-        int mat_width;
-
-        init();
-
-        //----------------------------------------------------------
-        // 1st test
-        //----------------------------------------------------------
-        // A(4x4) x B(4x4) = C(4x4)
-        mat_width               = 4;
-
+    task alloc_and_init_inputs(int mat_width);
         // mat_a[4][mat_width]
         mat_a                   = new[4];
         foreach (mat_a[i])
@@ -243,6 +233,21 @@ module MME_TOP_TB ();
                 mat_b[j][i]                 = $urandom()%256;
             end
         end
+    endtask
+
+    // main
+    initial begin
+        int mat_width;
+
+        init();
+
+        //----------------------------------------------------------
+        // 1st test
+        //----------------------------------------------------------
+        // A(4x4) x B(4x4) = C(4x4)
+        mat_width               = 4;
+
+        alloc_and_init_inputs(mat_width);
 
         test_mme(mat_width, 32'h0, 32'h1000, 32'h2000);
 
@@ -253,28 +258,31 @@ module MME_TOP_TB ();
         // A(4x8) x B(8x4) = C(4x4)
         mat_width               = 8;
 
-        // mat_a[4][mat_width]
-        mat_a                   = new[4];
-        foreach (mat_a[i])
-            mat_a[i]                = new [mat_width];
-        // mat_b[mat_width][4]
-        mat_b                   = new[mat_width];
-        foreach (mat_b[i])
-            mat_b[i]                = new [4];
-
-        // initialize data
-        for (int i=0; i<mat_width; i++) begin
-            for (int j=0; j<4; j++) begin
-                mat_a[i][j]                 = 32'h1;
-                mat_b[j][i]                 = 32'h1;
-                //mat_a[i][j]                 = i*'h10+j;
-                //mat_b[j][i]                 = i*'h100+j;
-                //mat_a[i][j]                 = $urandom()%256;
-                //mat_b[j][i]                 = $urandom()%256;
-            end
-        end
+        alloc_and_init_inputs(mat_width);
 
         test_mme(mat_width, 32'h0, 32'h1000, 32'h2000);
+
+        //----------------------------------------------------------
+        // 3rd test
+        //----------------------------------------------------------
+        // A(4x12) x B(12x4) = C(4x4)
+        mat_width               = 12;
+
+        alloc_and_init_inputs(mat_width);
+
+        test_mme(mat_width, 32'h0, 32'h1000, 32'h2000);
+
+
+        //----------------------------------------------------------
+        // 4th test
+        //----------------------------------------------------------
+        // A(4x16) x B(16x4) = C(4x4)
+        mat_width               = 16;
+
+        alloc_and_init_inputs(mat_width);
+
+        test_mme(mat_width, 32'h0, 32'h1000, 32'h2000);
+
 
         $finish;
     end
