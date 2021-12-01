@@ -5,9 +5,12 @@
 
 module MME_TOP
 #(
-    parameter BUF_AW            = 6,
-    parameter DW                = 32,   // data width
-    parameter SA_WIDTH          = 4     // systolic array width in PE count
+    parameter DW                = 32,   // data width (element size)
+    parameter SA_WIDTH          = 4,    // systolic array width in PE count
+    parameter BUF_AW            = 6,    // buffer address width
+    // Systolic array width in PE count
+    parameter BUF_DW            = DW*SA_WIDTH    // 128
+
  )
 (
     input   wire                clk,
@@ -24,14 +27,12 @@ module MME_TOP
     AXI_R_CH.slave              axi_r_if
 );
 
-    // Systolic array width in PE count
-    localparam                  BUF_DW      = DW*SA_WIDTH;   // 128
-
     // interface between CFG <-> other blocks
     wire    [31:0]              mat_a_addr,     mat_b_addr,     mat_c_addr;
     wire    [7:0]               mat_width;
     wire                        engine_start,   engine_done;
 
+    // DMA engine <-> SRAM buffers
     wire                        buf_a_wren;
     wire    [BUF_AW-1:0]        buf_a_waddr,    buf_a_raddr;
     wire    [BUF_DW/8-1:0]      buf_a_wbyteenable, buf_b_wbyteenable;
@@ -40,6 +41,7 @@ module MME_TOP
     wire    [BUF_AW-1:0]        buf_b_waddr,    buf_b_raddr;
     wire    [BUF_DW-1:0]        buf_b_wdata,    buf_b_rdata;
 
+    // DMA engine <-> MM engine
     wire                        mm_start;
     wire                        mm_done;
     wire    signed [2*DW:0]     accum[SA_WIDTH][SA_WIDTH];

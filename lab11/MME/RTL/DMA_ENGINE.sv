@@ -50,12 +50,15 @@ module DMA_ENGINE
     //----------------------------------------------------------
     enum    logic [1:0]     { S_AR_IDLE, S_AR_REQA, S_AR_REQB }
                                 ar_state,   ar_state_n;
+    reg     [7:0]               ar_offset,  ar_offset_n;
+
 
     always_comb begin
         ar_state_n                  = ar_state;
+        ar_offset_n                 = ar_offset;
 
         axi_ar_if.arvalid           = 1'b0;
-        axi_ar_if.araddr            = mat_a_addr_i;
+        axi_ar_if.araddr            = 32'hX;
         axi_ar_if.arid              = 'd0;
         axi_ar_if.arlen             = 4'hF;     // 16 burst
         axi_ar_if.arsize            = 3'b010;   // 4 bytes per transfer
@@ -65,20 +68,29 @@ module DMA_ENGINE
             S_AR_IDLE: begin
                 if (start_i) begin
                     ar_state_n                  = S_AR_REQA;
+                    ar_offset_n                 = 'd0;
                 end
             end
             S_AR_REQA: begin
                 axi_ar_if.arvalid           = 1'b1;
-                axi_ar_if.araddr            = mat_a_addr_i;
+                axi_ar_if.araddr            = mat_a_addr_i + (ar_offset<<2);
                 if (axi_ar_if.arready) begin
-                    ar_state_n                  = S_AR_REQB;
+                    ar_offset_n                 = ar_offset + 'd16;    // 16 burst
+                    if (ar_offset_n==(mat_width_i*SA_WIDTH)) begin
+                        ar_offset_n                 = 'd0;
+                        ar_state_n                  = S_AR_REQB;
+                    end
                 end
             end
             S_AR_REQB: begin
                 axi_ar_if.arvalid           = 1'b1;
-                axi_ar_if.araddr            = mat_b_addr_i;
+                axi_ar_if.araddr            = mat_b_addr_i + (ar_offset<<2);
                 if (axi_ar_if.arready) begin
-                    ar_state_n                  = S_AR_IDLE;
+                    ar_offset_n                 = ar_offset + 'd16;    // 16 burst
+                    if (ar_offset_n==(mat_width_i*SA_WIDTH)) begin
+                        ar_offset_n                 = 'd0;
+                        ar_state_n                  = S_AR_IDLE;
+                    end
                 end
             end
         endcase
@@ -87,9 +99,11 @@ module DMA_ENGINE
     always_ff @(posedge clk)
         if (!rst_n) begin
             ar_state                    <= S_AR_IDLE;
+            ar_offset                   <= 'd0;
         end
         else begin
             ar_state                    <= ar_state_n;
+            ar_offset                   <= ar_offset_n;
         end
 
     //----------------------------------------------------------
@@ -97,7 +111,7 @@ module DMA_ENGINE
     //----------------------------------------------------------
     enum    logic [1:0]     { S_R_REQA, S_R_REQB, S_R_MM }
                                 r_state,    r_state_n;
-    reg     [BUF_AW+1:0]        rcnt,       rcnt_n;                                
+    reg     [BUF_AW+1:0]        rcnt,       rcnt_n;
 
     always_comb begin
         r_state_n                   = r_state;
@@ -113,12 +127,12 @@ module DMA_ENGINE
                 axi_r_if.rready             = 1'b1;
                 if (axi_r_if.rvalid) begin
                     buf_a_wren_o                = 1'b1;
+                    rcnt_n                      = rcnt + 'd1;
                     if (axi_r_if.rlast) begin
-                        r_state_n                   = S_R_REQB;
-                        rcnt_n                      = 'd0;
-                    end
-                    else begin
-                        rcnt_n                      = rcnt + 'd1;
+                        if (rcnt_n==(mat_width_i*SA_WIDTH)) begin
+                            r_state_n                   = S_R_REQB;
+                            rcnt_n                      = 'd0;
+                        end
                     end
                 end
             end
@@ -126,12 +140,12 @@ module DMA_ENGINE
                 axi_r_if.rready             = 1'b1;
                 if (axi_r_if.rvalid) begin
                     buf_b_wren_o                = 1'b1;
+                    rcnt_n                      = rcnt + 'd1;
                     if (axi_r_if.rlast) begin
-                        r_state_n                   = S_R_MM;
-                        rcnt_n                      = 'd0;
-                    end
-                    else begin
-                        rcnt_n                      = rcnt + 'd1;
+                        if (rcnt_n==(mat_width_i*SA_WIDTH)) begin
+                            r_state_n                   = S_R_MM;
+                            rcnt_n                      = 'd0;
+                        end
                     end
                 end
             end
@@ -167,7 +181,7 @@ module DMA_ENGINE
     //----------------------------------------------------------
     enum    logic [2:0]     { S_W_IDLE, S_W_SA_WAIT, S_W_REQ, S_W_DATA, S_W_RSP }
                                 w_state,    w_state_n;
-    reg     [3:0]               wcnt,       wcnt_n;                                
+    reg     [3:0]               wcnt,       wcnt_n;
 
     always_comb begin
         w_state_n                   = w_state;

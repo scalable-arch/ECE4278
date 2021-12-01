@@ -19,7 +19,7 @@ addrmap MME_CFG {
             hw = na;
             reset = 32'h0001_0101;
         } version[31:0];	// 32b field
-    } IP_VER @0x0;		// offset = 0
+    } MME_VER @0x0;		// offset = 0
     reg {
         field {
             desc = "The number of bytes to be transferred from the source to the destination.";
