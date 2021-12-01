@@ -9,17 +9,10 @@ set target_library \
 # ---------------------------------------
 # Step 2: Read designs
 # ---------------------------------------
-analyze -format sverilog $env(LAB_PATH)/RDL/OUTPUT/MME_CFG.sv
 analyze -format sverilog $env(LAB_PATH)/RTL/AXI_INTF.sv
-analyze -format sverilog $env(LAB_PATH)/RTL/DUAL_PORT_SRAM.sv
 analyze -format sverilog $env(LAB_PATH)/RTL/DMA_ENGINE.sv
-analyze -format sverilog $env(LAB_PATH)/RTL/DATA_PROVIDER.sv
-analyze -format sverilog $env(LAB_PATH)/RTL/PE.sv
-analyze -format sverilog $env(LAB_PATH)/RTL/SYSTOLIC_ARRAY.sv
-analyze -format sverilog $env(LAB_PATH)/RTL/MM_ENGINE.sv
-analyze -format sverilog $env(LAB_PATH)/RTL/MME_TOP.sv
 
-set design_name         MME_TOP
+set design_name         DMA_ENGINE
 elaborate $design_name
 
 # connect all the library components and designs
