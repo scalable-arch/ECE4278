@@ -95,9 +95,9 @@ module DATA_PROVIDER
     reg     signed  [DW-1:0]    a[SA_WIDTH];
 
     always_comb begin
-        a[0]                = sram_data_i[DW*(SA_WIDTH-1)+:DW];
+        a[0]                = signed'(sram_data_i[DW*(SA_WIDTH-1)+:DW]);
         for (int i=1; i<SA_WIDTH; i++) begin
-            a[i]                = sram_data_reg[i-1][DW*(SA_WIDTH-1-i)+:DW];
+            a[i]                = signed'(sram_data_reg[i-1][DW*(SA_WIDTH-1-i)+:DW]);
         end
     end
 

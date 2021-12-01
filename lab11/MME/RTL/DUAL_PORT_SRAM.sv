@@ -35,6 +35,7 @@ module DUAL_PORT_SRAM
         rdata_o                 <= ram[raddr_i];
     end
 
+    // synthesis translate_off
     function write;
     input   [AW-1:0]    addr;
     input   [DW-1:0]    data;
@@ -42,5 +43,6 @@ module DUAL_PORT_SRAM
         ram[addr]               = data;
     end
     endfunction
+    // synthesis translate_on
 
 endmodule

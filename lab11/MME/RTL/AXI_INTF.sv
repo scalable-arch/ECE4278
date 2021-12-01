@@ -126,12 +126,6 @@ interface APB (
     logic   [31:0]              prdata;
     logic                       pslverr;
 
-    // a semaphore to allow only one access at a time
-    semaphore                   sema;
-    initial begin
-        sema                        = new(1);
-    end
-
     modport master (
         input           clk,
         input           pready, prdata, pslverr,
@@ -142,6 +136,13 @@ interface APB (
         output          pready, prdata, pslverr,
         input           psel, penable, paddr, pwrite, pwdata
     );
+
+    // synthesis translate_off
+    // a semaphore to allow only one access at a time
+    semaphore                   sema;
+    initial begin
+        sema                        = new(1);
+    end
 
     task init();
         psel                    = 1'b0;
@@ -210,5 +211,6 @@ interface APB (
         // release the semaphore
         sema.put(1);
     endtask
+    // synthesis translate_on
 
 endinterface

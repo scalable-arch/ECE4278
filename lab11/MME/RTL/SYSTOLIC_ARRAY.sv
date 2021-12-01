@@ -132,16 +132,16 @@ module SYSTOLIC_ARRAY
     always_comb begin
         // clear signal generation
         clr[0][0]               = start_i;
-        for (int i=0; i<SA_WIDTH; i++) begin
-            for (int j=0; j<SA_WIDTH; j++) begin
-                if ((i!=0) | (j!=0)) begin
+        for (reg [7:0] i=0; i<SA_WIDTH; i++) begin
+            for (reg [7:0] j=0; j<SA_WIDTH; j++) begin
+                if ((i!='d0) | (j!='d0)) begin
                     clr[i][j]               = (cnt==(i+j));
                 end
             end
         end
         // hold signal generation
-        for (int i=0; i<SA_WIDTH; i++) begin
-            for (int j=0; j<SA_WIDTH; j++) begin
+        for (reg [7:0] i=0; i<SA_WIDTH; i++) begin
+            for (reg [7:0] j=0; j<SA_WIDTH; j++) begin
                 hold[i][j]               = (state==S_IDLE) | (cnt>=(mat_width_i+i+j+1));
             end
         end

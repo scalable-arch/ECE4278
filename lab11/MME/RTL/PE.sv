@@ -18,9 +18,9 @@ module PE
     output  signed [DW-1:0]     b_o,
     output  signed [2*DW:0]     accum_o
 );
-    reg     [DW-1:0]            a_reg;
-    reg     [DW-1:0]            b_reg;
-    reg     [2*DW:0]            accum;
+    reg signed [DW-1:0]         a_reg;
+    reg signed [DW-1:0]         b_reg;
+    reg signed [2*DW:0]         accum;
 
     always_ff @(posedge clk)
     begin
