@@ -8,10 +8,6 @@
 
 `define 	TIMEOUT_DELAY 	99999999
 
-`define     SRC_REGION_START    32'h0000_0000
-`define     SRC_REGION_SIZE     32'h0000_2000
-`define     DST_REGION_STRIDE   32'h0000_2000
-
 module MME_TOP_TB ();
 
     //----------------------------------------------------------
@@ -90,6 +86,8 @@ module MME_TOP_TB ();
     //----------------------------------------------------------
     // Testbench starts
     //----------------------------------------------------------
+
+    // For APB write (+ read back the written value to verify)
     task automatic apb_write_n_verify(int addr, int wdata);
         int rdata;
 
@@ -102,6 +100,7 @@ module MME_TOP_TB ();
         end
     endtask
 
+    // initialize the interface
     task init();
         int data;
         apb_if.init();
@@ -129,25 +128,26 @@ module MME_TOP_TB ();
         $display("---------------------------------------------------");
         $display("Load matrix A and B to memory");
         $display("---------------------------------------------------");
-
-        for (int i=0; i<4; i++) begin
-            for (int j=0; j<mat_width; j++) begin
-                // row-major layout
-                //   A[0][0] - A[0][1] - A[0][2] - A[0][3]
-                // - A[1][0] - A[1][1] - A[1][2] - A[1][3]
+        for (int row=0; row<4; row++) begin
+            for (int col=0; col<mat_width; col++) begin
+                // column-major order
+                //   A[0][0] - A[1][0] - A[2][0] - A[3][0] - ...
+                // - A[0][1] - A[1][1] - A[2][1] - A[3][1] - ...
                 // ...
-                //u_mem.write_word(mat_a_addr+(i*mat_width+j)*4, mat_a[i][j]);
-                u_mem.write_word(mat_a_addr+(i+j*mat_width)*4, mat_a[i][j]);
+                int index = col*4+ row;
+                // *4 for byte address
+                u_mem.write_word(mat_a_addr+index*4, mat_a[row][col]);
             end
         end
 
-        for (int j=0; j<4; j++) begin
-            for (int i=0; i<mat_width; i++) begin
-                // column-major layout
-                //   A[0][0] - A[1][0] - A[2][0] - A[3][0] - ...
-                // - A[0][1] - A[1][1] - A[2][1] - A[3][1] - ...
-                //u_mem.write_word(mat_b_addr+(i+j*mat_width)*4, mat_b[i][j]);
-                u_mem.write_word(mat_b_addr+(i*mat_width+j)*4, mat_b[i][j]);
+        for (int row=0; row<mat_width; row++) begin
+            for (int col=0; col<4; col++) begin
+                // row-major order
+                //   B[0][0] - B[0][1] - B[0][2] - B[0][3]
+                // - B[1][0] - B[1][1] - B[1][2] - B[1][3]
+                int index = row*4+ col;
+                // *4 for byte address
+                u_mem.write_word(mat_b_addr+index*4, mat_b[row][col]);
             end
         end
 
@@ -178,25 +178,30 @@ module MME_TOP_TB ();
         $display("---------------------------------------------------");
         $display("Verify result");
         $display("---------------------------------------------------");
-        for (int i=0; i<mat_width; i++) begin
-            for (int j=0; j<mat_width; j++) begin
-                expected_c[i][j]                = 'd0;
+        for (int row=0; row<mat_width; row++) begin
+            for (int col=0; col<mat_width; col++) begin
+                expected_c[row][col]    = 'd0;
                 for(int k=0; k<4; k++) begin
-                    expected_c[i][j]                += (mat_a[i][k] * mat_b[k][j]);
+                    expected_c[row][col]    += (mat_a[row][k] * mat_b[k][col]);
                 end
             end
         end
 
-        for (int i=0; i<4; i++) begin
-            for (int j=0; j<4; j++) begin
-                data = u_mem.read_word(mat_c_addr+(i*4+j)*4);
-                if (data!==expected_c[i][j][31:0]) begin
-                    $display("Output mismatch at (%x, %d): expected=%x, real=%x", i, j, expected_c[i][j], data);
+        for (int row=0; row<4; row++) begin
+            for (int col=0; col<4; col++) begin
+                // row-major order
+                //   C[0][0] - C[0][1] - C[0][2] - C[0][3]
+                // - C[1][0] - C[1][1] - C[1][2] - C[1][3]
+                int index = row*4+ col;
+                // *4 for byte address
+                data = u_mem.read_word(mat_c_addr+index*4);
+                if (data!==expected_c[row][col][31:0]) begin
+                    $display("Output mismatch at (%x, %d): expected=%x, real=%x", row, col, expected_c[row][col], data);
                     @(posedge clk);
                     $finish;
                 end
                 else begin
-                    $display("Output match at (%d, %d)", i, j);
+                    $display("Output match at (%d, %d)", row, col);
                 end
             end
         end
