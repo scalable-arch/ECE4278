@@ -17,6 +17,11 @@
 
 module DMAC_TOP_TB ();
 
+  // inject random seed
+  initial begin
+    $srandom(`RANDOM_SEED);
+  end
+
   //----------------------------------------------------------
   // clock and reset generation
   //----------------------------------------------------------
@@ -147,7 +152,7 @@ module DMAC_TOP_TB ();
     $display("---------------------------------------------------");
     for (int i=0; i<`SRC_REGION_SIZE; i=i+4) begin
       // write random data
-      u_mem.write_word(`SRC_REGION_START+i, $random(`RANDOM_SEED));
+      u_mem.write_word(`SRC_REGION_START+i, $random);
     end
   endtask
 
