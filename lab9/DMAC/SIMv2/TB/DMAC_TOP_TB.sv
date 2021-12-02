@@ -6,13 +6,21 @@
 `define     CMD_OFFSET  32'hc
 `define     STAT_OFFSET 32'h10
 
-`define 	TIMEOUT_DELAY 	99999999
+`define 	  TIMEOUT_DELAY 	99999999
 
 `define     SRC_REGION_START    32'h0000_0000
 `define     SRC_REGION_SIZE     32'h0000_2000
 `define     DST_REGION_STRIDE   32'h0000_2000
 
+`define     RANDOM_SEED     12123344
+`define     TEST_CNT        100
+
 module DMAC_TOP_TB ();
+
+    // inject random seed
+    initial begin
+        $srandom(`RANDOM_SEED);
+    end
 
     //----------------------------------------------------------
     // clock and reset generation
@@ -223,10 +231,10 @@ module DMAC_TOP_TB ();
 
         // run 4 channel tests simultaneously
         fork
-            test_channel(0, 32);
-            test_channel(1, 32);
-            test_channel(2, 32);
-            test_channel(3, 32);
+            test_channel(0, `TEST_CNT);
+            test_channel(1, `TEST_CNT);
+            test_channel(2, `TEST_CNT);
+            test_channel(3, `TEST_CNT);
         join
 
         $finish;
