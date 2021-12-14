@@ -289,6 +289,7 @@ module MME_TOP_TB ();
         test_mme(mat_width, 32'h0, 32'h1000, 32'h2000);
 
 
+        $display("Test finished!");
         $finish;
     end
 

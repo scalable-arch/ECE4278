@@ -58,9 +58,9 @@ module DATA_PROVIDER_TB ();
 
     DATA_PROVIDER
     #(
-        .AW                     (AW),
         .DW                     (DW),
-        .SIZE                   (SIZE)
+        .SA_WIDTH               (SIZE),
+        .BUF_AW                 (AW)
     )
     u_DUT
     (

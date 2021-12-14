@@ -60,7 +60,7 @@ module SYSTOLIC_ARRAY_TB ();
     SYSTOLIC_ARRAY
     #(
         .DW                     (DW),
-        .SIZE                   (SIZE)
+        .SA_WIDTH               (SIZE)
     )
     u_DUT
     (
