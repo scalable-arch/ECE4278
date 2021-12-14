@@ -131,16 +131,26 @@ module MME_TOP_TB ();
             mat_b[i]                = new [4];
 
         // initialize data
-        for (int i=0; i<mat_width; i++) begin
-            for (int j=0; j<4; j++) begin
-                //mat_a[i][j]                 = 32'h1;
-                //mat_b[j][i]                 = 32'h1;
-                //mat_a[i][j]                 = i*'h10+j;
-                //mat_b[j][i]                 = i*'h100+j;
-                mat_a[i][j]                 = $urandom()%256;
-                mat_b[j][i]                 = $urandom()%256;
-            end
+        for (int row=0; row<4; row++) begin
+          for (int col=0; col<mat_width; col++) begin
+            mat_a[row][col]                 = $urandom()%256;
+          end
         end
+        for (int row=0; row<mat_width; row++) begin
+          for (int col=0; col<4; col++) begin
+            mat_b[row][col]                 = $urandom()%256;
+          end
+        end
+//        for (int i=0; i<mat_width; i++) begin
+//            for (int j=0; j<4; j++) begin
+//                //mat_a[i][j]                 = 32'h1;
+//                //mat_b[j][i]                 = 32'h1;
+//                //mat_a[i][j]                 = i*'h10+j;
+//                //mat_b[j][i]                 = i*'h100+j;
+//                mat_a[j][i]                 = $urandom()%256;
+//                mat_b[i][j]                 = $urandom()%256;
+//            end
+//        end
     endtask
 
     // test matrix multiplication
@@ -206,10 +216,10 @@ module MME_TOP_TB ();
         $display("---------------------------------------------------");
         $display("Verify result");
         $display("---------------------------------------------------");
-        for (int row=0; row<mat_width; row++) begin
-            for (int col=0; col<mat_width; col++) begin
+        for (int row=0; row<4; row++) begin
+            for (int col=0; col<4; col++) begin
                 expected_c[row][col]    = 'd0;
-                for(int k=0; k<4; k++) begin
+                for(int k=0; k<mat_width; k++) begin
                     expected_c[row][col]    += (mat_a[row][k] * mat_b[k][col]);
                 end
             end
